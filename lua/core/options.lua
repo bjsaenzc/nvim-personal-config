@@ -26,7 +26,10 @@ opt.cursorline = true
 
 -- Appearance
 opt.termguicolors = true
-opt.background = "dark"
+-- opt.background = "dark"
+opt.termguicolors = true
+-- vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
 opt.signcolumn = "yes"
 opt.showmode = false
 vim.diagnostic.config {
@@ -47,7 +50,7 @@ opt.splitbelow = true
 opt.iskeyword:append("-")
 
 -- Disable the mouse while in nvim
-opt.mouse = ""
+opt.mouse = "a"
 
 -- Folding
 opt.foldlevel = 20
