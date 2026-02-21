@@ -10,6 +10,21 @@ keymap.set("n", "<leader>ww", ":w<CR>") -- save
 keymap.set("n", "gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
+keymap.set("n", "<leader>bd", ":bd<CR>") -- buffer delete
+-- keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true }) -- Leaves terminal mode
+vim.api.nvim_create_autocmd('TermOpen', {
+  pattern = '*',
+  callback = function()
+    -- Esc: Terminal mode → Normal mode
+    keymap.set('t', '<Esc>', [[<C-\><C-n>]], { buffer = 0, noremap = true, silent = true })
+
+    -- <C-h/j/k/l>: move to other windows while in terminal mode (optional)
+    keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-j>', [[<C-\><C-n><C-w>j]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { buffer = 0, noremap = true, silent = true })
+  end,
+})
 
 -- Split window management
 keymap.set("n", "<leader>sv", "<C-w>v") -- split window vertically
@@ -19,7 +34,7 @@ keymap.set("n", "<leader>sx", ":close<CR>") -- close split window
 keymap.set("n", "<leader>sj", "<C-w>-") -- make split window height shorter
 keymap.set("n", "<leader>sk", "<C-w>+") -- make split windows height taller
 keymap.set("n", "<leader>sl", "<C-w>>5") -- make split windows width bigger 
-keymap.set("n", "<leader>sh", "<C-w><5") -- make split windows width smaller
+keymap.set("n", "<leader>sH", "<C-w><5") -- make split windows width smaller
 
 -- Tab management
 keymap.set("n", "<leader>to", ":tabnew<CR>") -- open a new tab
@@ -45,10 +60,13 @@ keymap.set("n", "<leader>qc", ":cclose<CR>") -- close quickfix list
 -- Vim-maximizer
 keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>") -- toggle maximize tab
 
+-- Nvim-Peek (Markdown Preview)
+vim.keymap.set("n", "<leader>mv", "<cmd>Markview splitToggle<CR>", { silent = true })
+
 -- Nvim-tree
-keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>") -- toggle file explorer
-keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>") -- toggle focus to file explorer
-keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>") -- find file in file explorer
+keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>") -- toggle file explorer
+keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>") -- toggle focus to file explorer
+keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>") -- find file in file explorer
 
 -- Telescope
 keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, {}) -- fuzzy find files in project
@@ -60,6 +78,7 @@ keymap.set('n', '<leader>fa', function()
   local path = vim.fn.expand("%:p:h")
   require('telescope.builtin').live_grep({ search_dirs = { path } })
 end, {})-- fuzzy grepfind contents in current buffer
+keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {}) -- fuzzy find LSP/class symbols
 keymap.set('n', '<leader>fo', require('telescope.builtin').lsp_document_symbols, {}) -- fuzzy find LSP/class symbols
 keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {}) -- fuzzy find LSP/incoming calls
 keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({default_text=":method:"}) end) -- fuzzy find methods in current class
@@ -92,6 +111,9 @@ keymap.set("n", "<leader>xr", ":call VrcQuery()<CR>") -- Run REST query
 -- LSP (See nvim-lspconfig.lua)
 keymap.set('n', '<leader>gg', '<cmd>lua vim.lsp.buf.hover()<CR>')
 keymap.set('n', '<leader>gd', '<cmd>lua vim.lsp.buf.definition()<CR>')
+keymap.set('n', '<leader>Gd', '<C-w>v<cmd>lua vim.lsp.buf.definition()<CR>')
+keymap.set('n', '<leader>Gh', '<C-w>s<cmd>lua vim.lsp.buf.definition()<CR>')
+keymap.set('n', '<leader>Tg', '<cmd>tab split | lua vim.lsp.buf.definition()<CR>')
 keymap.set('n', '<leader>gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
 keymap.set('n', '<leader>gi', '<cmd>lua vim.lsp.buf.implementation()<CR>')
 keymap.set('n', '<leader>gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>')
@@ -127,4 +149,6 @@ keymap.set("n", '<leader>df', '<cmd>Telescope dap frames<cr>')
 keymap.set("n", '<leader>dh', '<cmd>Telescope dap commands<cr>')
 keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostics({default_text=":E:"}) end)
 
+-- GH Github
+keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
 
