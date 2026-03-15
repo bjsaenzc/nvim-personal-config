@@ -50,15 +50,19 @@ return {
         'lemminx',
         'marksman',
         'quick_lint_js',
+        'texlab',
       },
       handlers = {
         -- Default handler
         function(server_name)
           -- Skip servers we configure manually
-          if server_name == 'lua_ls' or server_name == 'pylsp' or server_name == 'gopls' then
-            return
+          -- if server_name == 'lua_ls' or server_name == 'pylsp' or server_name == 'gopls' then
+          --   return
+          -- end
+          local manual_servers = {'lua_ls', 'pylsp', 'gopls', 'textlab'}
+          for _, name in ipairs(manual_servers) do
+            if server_name == name then return end
           end
-          
           vim.lsp.config(server_name, {
             on_attach = lsp_attach,
             capabilities = lsp_capabilities,
@@ -180,6 +184,31 @@ return {
       },
     })
 
+    -- Texlab LSP settings
+    vim.lsp.config('texlab', {
+      capabilities = lsp_capabilities,
+      on_attach = lsp_attach,
+      settings = {
+        texlab = {
+          build = {
+            executable = "latexmk",
+            args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
+            onSave = true,
+            forwardSearchAfter = true,
+          },
+          forwardSearch = {
+            -- Adjust executable to your preferred PDF viewer (e.g., 'zathura', 'okular', 'skim')
+            executable = "zathura",
+            args = { "--synctex-forward", "%l:1:%f", "%p" },
+          },
+          chktex = {
+            onOpenAndSave = true,
+          },
+          diagnosticsDelay = 300,
+        },
+      },
+    })
+
     -- Autocommand for Go formatting and organizing imports on save
     vim.api.nvim_create_autocmd("BufWritePre", {
       pattern = "*.go",
@@ -241,5 +270,6 @@ return {
     vim.lsp.enable('lemminx')
     vim.lsp.enable('marksman')
     vim.lsp.enable('quick_lint_js')
+    vim.lsp.enable('texlab')
   end
 }
