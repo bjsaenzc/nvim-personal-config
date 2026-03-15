@@ -23,6 +23,7 @@ return {
       'vim',
       'vimdoc',
       'query',
+      'latex',
     },
   },
   config = function (_, opts)

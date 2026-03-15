@@ -16,7 +16,7 @@ return {
 
     -- local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
     local lsp_capabilities = require('blink.cmp').get_lsp_capabilities()
-    
+
     local lsp_attach = function(client, bufnr)
       vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
     end
@@ -27,17 +27,17 @@ return {
         'pyproject.toml',
         '.git',
       }
-      return vim.fs.dirname(vim.fs.find(root_files, { 
-        path = fname, 
-        upward = true 
+      return vim.fs.dirname(vim.fs.find(root_files, {
+        path = fname,
+        upward = true
       })[1])
     end
 
     local function get_go_root(fname)
       local root_files = { 'go.mod', '.git' }
-      return vim.fs.dirname(vim.fs.find(root_files, { 
-        path = fname, 
-        upward = true 
+      return vim.fs.dirname(vim.fs.find(root_files, {
+        path = fname,
+        upward = true
       })[1])
     end
 
@@ -59,7 +59,7 @@ return {
           -- if server_name == 'lua_ls' or server_name == 'pylsp' or server_name == 'gopls' then
           --   return
           -- end
-          local manual_servers = {'lua_ls', 'pylsp', 'gopls', 'textlab'}
+          local manual_servers = {'lua_ls', 'pylsp', 'gopls', 'texlab'}
           for _, name in ipairs(manual_servers) do
             if server_name == name then return end
           end
@@ -118,20 +118,20 @@ return {
       before_init = function(params, config)
         local root_dir = config.root_dir
         if not root_dir then return end
-        
+
         -- Initialize settings structure
         config.settings = config.settings or {}
         config.settings.pylsp = config.settings.pylsp or {}
         config.settings.pylsp.plugins = config.settings.pylsp.plugins or {}
-        
+
         -- Disable default linters to avoid conflicts
         config.settings.pylsp.plugins.pycodestyle = { enabled = false }
         config.settings.pylsp.plugins.pyflakes = { enabled = false }
         config.settings.pylsp.plugins.mccabe = { enabled = false }
         config.settings.pylsp.plugins.yapf = { enabled = false }
-        
+
         local cq = vim.fs.joinpath(root_dir, '.code_quality')
-        
+
         -- Check for flake8 config
         local flake8_config = vim.fs.joinpath(cq, '.flake8')
         if vim.uv.fs_stat(flake8_config) then
@@ -143,7 +143,7 @@ return {
         else
           config.settings.pylsp.plugins.flake8 = { enabled = true }
         end
-        
+
         -- Check for pylint config
         local pylintrc = vim.fs.joinpath(cq, '.pylintrc')
         if vim.uv.fs_stat(pylintrc) then
@@ -154,7 +154,7 @@ return {
         else
           config.settings.pylsp.plugins.pylint = { enabled = true }
         end
-        
+
         -- Check for mypy config
         local mypyini = vim.fs.joinpath(cq, 'mypy.ini')
         if vim.uv.fs_stat(mypyini) then
@@ -188,6 +188,7 @@ return {
     vim.lsp.config('texlab', {
       capabilities = lsp_capabilities,
       on_attach = lsp_attach,
+      root_markers = { ".git", ".latexmkrc", "latexmkrc", ".texlabroot", "texlabroot", "Tectonic.toml", ".tex" },
       settings = {
         texlab = {
           build = {
@@ -215,12 +216,12 @@ return {
       callback = function()
         -- Format
         vim.lsp.buf.format({ async = false })
-        
+
         -- Organize imports
         local params = vim.lsp.util.make_range_params()
         params.context = { only = { "source.organizeImports" } }
         local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
-        
+
         for _, res in pairs(result or {}) do
           for _, action in pairs(res.result or {}) do
             if action.edit then
@@ -254,7 +255,7 @@ return {
       local hl = "DiagnosticSign" .. type
       -- vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
     end
-  
+
     -- Globally configure all LSP floating preview popups
     local open_floating_preview = vim.lsp.util.open_floating_preview
     function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)

@@ -152,3 +152,12 @@ keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostic
 -- GH Github
 keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
 
+-- Vimtex (LaTEX)
+-- Standard VimTeX commands mapped to more "IDE-like" keys
+vim.keymap.set('n', '<leader>ll', '<cmd>VimtexCompile<cr>', { desc = 'Stop/Start Compilation' })
+vim.keymap.set('n', '<leader>lv', '<cmd>VimtexView<cr>', { desc = 'View PDF' })
+vim.keymap.set('n', '<leader>li', '<cmd>VimtexInfo<cr>', { desc = 'Vimtex Info' })
+vim.keymap.set('n', '<leader>lc', '<cmd>VimtexClean<cr>', { desc = 'Clean Aux Files' })
+vim.keymap.set('n', '<leader>lt', '<cmd>VimtexTocOpen<cr>', { desc = 'Open Table of Contents' })
+
+
