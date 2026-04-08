@@ -11,6 +11,24 @@ keymap.set("n", "gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
 keymap.set("n", "<leader>bd", ":bd<CR>") -- buffer delete
+keymap.set("n", "<leader>ba", ":%bd<CR>") -- Close all buffers (fails if there are unsaved changes)
+keymap.set("n", "<leader>bA", ":%bd!<CR>") -- Force close all buffers (discards unsaved changes)
+-- Close all buffers but current
+vim.keymap.set("n", "<leader>bo", function()
+  local current = vim.api.nvim_get_current_buf()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    -- check if buffer is valid and not the current one
+    if vim.api.nvim_buf_is_valid(buf) and buf ~= current then
+      vim.api.nvim_buf_delete(buf, {})
+    end
+  end
+end, { desc = "Close all buffers but current" })
+-- Close all but current (keep splits)
+-- 1. Save current (% is current file)
+-- 2. Delete all buffers (1,$ ranges 1 to end)
+-- 3. Open previous file (e#)
+-- 4. Delete the temp buffer created by step 2 (bd#)
+vim.keymap.set("n", "<leader>bx", ":%bd|e#|bd#<CR>", { desc = "Close all but current (keep splits)" })
 -- keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true }) -- Leaves terminal mode
 vim.api.nvim_create_autocmd('TermOpen', {
   pattern = '*',
@@ -107,6 +125,17 @@ keymap.set("n", "<leader>h9", function() require("harpoon.ui").nav_file(9) end)
 
 -- Vim REST Console
 keymap.set("n", "<leader>xr", ":call VrcQuery()<CR>") -- Run REST query
+
+-- Kulala REST Client
+vim.keymap.set("n", "<leader>Rs", "<cmd>lua require('kulala').run()<cr>", { desc = "Send the request", silent = true })  -- Run the current request
+vim.keymap.set("n", "<leader>Ra", "<cmd>lua require('kulala').run_all()<cr>", { desc = "Send all requests", silent = true })  -- Run all requests in the file
+vim.keymap.set("n", "<leader>Re", "<cmd>lua require('kulala').set_selected_env()<cr>", { desc = "Select environment", silent = true })  -- Select environment
+vim.keymap.set("n", "<leader>Rt", "<cmd>lua require('kulala').toggle_view()<cr>", { desc = "Toggle headers/body", silent = true })  -- Toggle between showing body/headers
+vim.keymap.set("n", "<leader>Rp", "<cmd>lua require('kulala').jump_prev()<cr>", { desc = "Jump to previous request", silent = true })  -- Jump to the previous request
+vim.keymap.set("n", "<leader>Rn", "<cmd>lua require('kulala').jump_next()<cr>", { desc = "Jump to next request", silent = true })  -- Jump to the next request
+vim.keymap.set("n", "<leader>Rc", "<cmd>lua require('kulala').copy()<cr>", { desc = "Copy as cURL", silent = true })  -- Copy the current request as a cURL command to clipboard
+vim.keymap.set("n", "<leader>Rb", "<cmd>lua require('kulala').scratchpad()<cr>", { desc = "Open scratchpad", silent = true })  -- Open the scratchpad
+vim.keymap.set("n", "<leader>Rq", "<cmd>lua require('kulala').close()<cr>", { desc = "Close window", silent = true })  -- Close the Kulala window
 
 -- LSP (See nvim-lspconfig.lua)
 keymap.set('n', '<leader>gg', '<cmd>lua vim.lsp.buf.hover()<CR>')
