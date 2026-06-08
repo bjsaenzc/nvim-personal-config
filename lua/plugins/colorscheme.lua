@@ -1,4 +1,4 @@
--- theme/colorscheme (uncomment section for whichever theme you prefer or use your own)
+
 -- kanagawa theme (custom palette)
 -- return {
 -- -- https://github.com/rebelot/kanagawa.nvim
@@ -166,34 +166,34 @@
 -- }
 
 -- One dark Theme
--- return {
---   "navarasu/onedark.nvim",
---   priority = 1000, -- make sure to load this before all the other start plugins
---   lazy = false,
---   config = function()
---     require('onedark').setup {
---       style = 'warmer'
---     }
---     require('onedark').load()
---   end
--- }
---
--- VS Code Dark+
 return {
- {
-   "Mofiqul/vscode.nvim",
-   lazy = false,
-   priority = 1000,
-   config = function()
-     -- if you want it to look like real VS Code:
-     vim.o.background = "dark"
-     require("vscode").setup({
-       -- Example options:
-       transparent = true,
-       italic_comments = true,
-       disable_nvimtree_bg = true,
-     })
-     require("vscode").load()
-   end,
- },
+  "navarasu/onedark.nvim",
+  priority = 1000, -- make sure to load this before all the other start plugins
+  lazy = false,
+  config = function()
+    require('onedark').setup {
+      style = 'warmer'
+    }
+    require('onedark').load()
+  end
 }
+
+-- VS Code Dark+
+-- return {
+--  {
+--    "Mofiqul/vscode.nvim",
+--    lazy = false,
+--    priority = 1000,
+--    config = function()
+--      -- if you want it to look like real VS Code:
+--      vim.o.background = "dark"
+--      require("vscode").setup({
+--        -- Example options:
+--        transparent = false,
+--        italic_comments = true,
+--        disable_nvimtree_bg = true,
+--      })
+--      require("vscode").load()
+--    end,
+--  },
+-- }

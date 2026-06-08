@@ -7,7 +7,7 @@ local keymap = vim.keymap
 keymap.set("n", "<leader>wq", ":wq<CR>") -- save and quit
 keymap.set("n", "<leader>qq", ":q!<CR>") -- quit without saving
 keymap.set("n", "<leader>ww", ":w<CR>") -- save
-keymap.set("n", "gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
+keymap.set("n", "Gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
 keymap.set("n", "<leader>bd", ":bd<CR>") -- buffer delete
@@ -99,8 +99,11 @@ end, {})-- fuzzy grepfind contents in current buffer
 keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {}) -- fuzzy find LSP/class symbols
 keymap.set('n', '<leader>fo', require('telescope.builtin').lsp_document_symbols, {}) -- fuzzy find LSP/class symbols
 keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {}) -- fuzzy find LSP/incoming calls
-keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({default_text=":method:"}) end) -- fuzzy find methods in current class
-keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({symbols={'function'}}) end) -- fuzzy find methods in current class
+keymap.set('n', '<leader>fm', function()
+  require('telescope.builtin').treesitter({ symbols = { 'function', 'method' } })
+end)
+-- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({default_text=":method:"}) end) -- fuzzy find methods in current class
+-- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({symbols={'function'}}) end) -- fuzzy find methods in current class
 keymap.set('n', '<leader>ft', function() -- grep file contents in current nvim-tree node
   local success, node = pcall(function() return require('nvim-tree.lib').get_node_at_cursor() end)
   if not success or not node then return end;
@@ -180,13 +183,4 @@ keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostic
 
 -- GH Github
 keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
-
--- Vimtex (LaTEX)
--- Standard VimTeX commands mapped to more "IDE-like" keys
-vim.keymap.set('n', '<leader>ll', '<cmd>VimtexCompile<cr>', { desc = 'Stop/Start Compilation' })
-vim.keymap.set('n', '<leader>lv', '<cmd>VimtexView<cr>', { desc = 'View PDF' })
-vim.keymap.set('n', '<leader>li', '<cmd>VimtexInfo<cr>', { desc = 'Vimtex Info' })
-vim.keymap.set('n', '<leader>lc', '<cmd>VimtexClean<cr>', { desc = 'Clean Aux Files' })
-vim.keymap.set('n', '<leader>lt', '<cmd>VimtexTocOpen<cr>', { desc = 'Open Table of Contents' })
-
 

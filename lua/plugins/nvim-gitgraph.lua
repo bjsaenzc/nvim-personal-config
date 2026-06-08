@@ -10,7 +10,6 @@ return {
       commit = '●',
       merge_commit_end = '●',
       commit_end = '●',
-
       -- Nice curves (requires Nerd Font or compatible terminal font)
       GVER = '│',
       GHOR = '─',
@@ -20,7 +19,7 @@ return {
       GCRU = '╰',
     },
     format = {
-      timestamp = '%H:%M %d-%m-%Y', -- Removed seconds to reduce clutter
+      timestamp = '%H:%M %d-%m-%Y',
       fields = { 'hash', 'timestamp', 'branch_name', 'tag', 'author' },
     },
     hooks = {
@@ -40,7 +39,17 @@ return {
     {
       "<leader>gL",
       function()
-        require('gitgraph').draw({}, { all = true, max_count = 5000 })
+        require('gitgraph').draw({}, {
+          -- Replace `all = true` with explicit ref scopes.
+          -- --all would include refs/stash and refs/worktrees/* (Claude Code
+          -- creates these for isolated agent work), causing detached nodes.
+          -- --branches + --remotes + --tags covers everything you want
+          -- while naturally excluding stash and worktree refs.
+          branches = true,
+          remotes = true,
+          tags = true,
+          max_count = 5000,
+        })
       end,
       desc = "GitGraph - Draw",
     },
@@ -58,11 +67,11 @@ return {
     }
 
     -- Set the highlights for the graph parts
-    vim.api.nvim_set_hl(0, 'GitGraphHash', { fg = colors.grey })
-    vim.api.nvim_set_hl(0, 'GitGraphTimestamp', { fg = colors.grey })
-    vim.api.nvim_set_hl(0, 'GitGraphAuthor', { fg = colors.white })
+    vim.api.nvim_set_hl(0, 'GitGraphHash',       { fg = colors.grey })
+    vim.api.nvim_set_hl(0, 'GitGraphTimestamp',  { fg = colors.grey })
+    vim.api.nvim_set_hl(0, 'GitGraphAuthor',     { fg = colors.white })
     vim.api.nvim_set_hl(0, 'GitGraphBranchName', { fg = colors.yellow, bold = true })
-    vim.api.nvim_set_hl(0, 'GitGraphBranchTag', { fg = colors.red, bold = true })
+    vim.api.nvim_set_hl(0, 'GitGraphBranchTag',  { fg = colors.red,    bold = true })
 
     -- Set the colors for the graph lines (Branch1, Branch2, etc.)
     vim.api.nvim_set_hl(0, 'GitGraphBranch1', { fg = colors.blue })
