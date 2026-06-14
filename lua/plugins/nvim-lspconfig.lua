@@ -31,6 +31,9 @@ return {
         'lemminx',
         'marksman',
         'quick_lint_js',
+        'vtsls',
+        'eslint',
+        'emmet-language-server',
       },
     })
 
@@ -149,6 +152,76 @@ return {
 
         vim.lsp.buf.format({ async = false })
       end,
+    })
+
+    -- TypeScript / JavaScript (vtsls — a faster wrapper around tsserver)
+    vim.lsp.config('vtsls', {
+      root_markers = { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' },
+      settings = {
+        vtsls = {
+          experimental = {
+            completion = { enableServerSideFuzzyMatch = true },
+          },
+        },
+        typescript = {
+          updateImportsOnFileMove = { enabled = 'always' },
+          suggest = { completeFunctionCalls = true },
+          inlayHints = {
+            parameterNames = { enabled = 'literals' },
+            variableTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+          },
+        },
+        javascript = {
+          updateImportsOnFileMove = { enabled = 'always' },
+          inlayHints = {
+            parameterNames = { enabled = 'literals' },
+            variableTypes = { enabled = true },
+          },
+        },
+      },
+    })
+
+    -- ESLint (lint + fix-on-save). Let conform/prettier own formatting; let eslint
+    -- own lint autofixes.
+    vim.lsp.config('eslint', {
+      root_markers = {
+        '.eslintrc', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.json',
+        'eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs',
+        'package.json', '.git',
+      },
+      settings = {
+        workingDirectories = { mode = 'auto' },
+      },
+    })
+
+    -- Run eslint --fix on save (robust, doesn't depend on the EslintFixAll command).
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      pattern = { '*.ts', '*.tsx', '*.js', '*.jsx', '*.cjs', '*.mjs' },
+      callback = function()
+        local client = vim.lsp.get_clients({ bufnr = 0, name = 'eslint' })[1]
+        if not client then return end
+
+        local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
+        params.context = { only = { 'source.fixAll.eslint' }, diagnostics = {} }
+        local result = vim.lsp.buf_request_sync(0, 'textDocument/codeAction', params, 1000)
+        for _, res in pairs(result or {}) do
+          for _, action in pairs(res.result or {}) do
+            if action.edit then
+              vim.lsp.util.apply_workspace_edit(action.edit, client.offset_encoding)
+            end
+          end
+        end
+      end,
+    })
+
+    -- Emmet (HTML/CSS/JSX abbreviation expansion: div.foo>ul>li*3 <C-y>,)
+    vim.lsp.config('emmet_language_server', {
+      filetypes = {
+        'html', 'css', 'scss', 'sass', 'less',
+        'javascriptreact', 'typescriptreact',
+      },
     })
 
     -- Diagnostics
