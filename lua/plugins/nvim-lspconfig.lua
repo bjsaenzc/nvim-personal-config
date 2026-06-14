@@ -14,34 +14,15 @@ return {
   config = function()
     require('mason').setup()
 
-    -- local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
     local lsp_capabilities = require('blink.cmp').get_lsp_capabilities()
 
-    local lsp_attach = function(client, bufnr)
-      vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-    end
+    -- Rounded borders for all LSP/diagnostic floats (replaces the old
+    -- open_floating_preview monkey-patch).
+    vim.o.winborder = 'rounded'
 
-    -- Custom root pattern function
-    local function get_python_root(fname)
-      local root_files = {
-        'pyproject.toml',
-        '.git',
-      }
-      return vim.fs.dirname(vim.fs.find(root_files, {
-        path = fname,
-        upward = true
-      })[1])
-    end
-
-    local function get_go_root(fname)
-      local root_files = { 'go.mod', '.git' }
-      return vim.fs.dirname(vim.fs.find(root_files, {
-        path = fname,
-        upward = true
-      })[1])
-    end
-
-    -- Setup Mason LSP Config with handlers
+    -- Install servers. With mason-lspconfig v2, ensure_installed triggers
+    -- automatic_enable, so we no longer need a `handlers` table or manual
+    -- vim.lsp.enable() calls for these servers.
     require('mason-lspconfig').setup({
       ensure_installed = {
         'lua_ls',
@@ -50,29 +31,23 @@ return {
         'lemminx',
         'marksman',
         'quick_lint_js',
+        'vtsls',
+        'eslint',
+        'emmet-language-server',
       },
-      handlers = {
-        -- Default handler
-        function(server_name)
-          -- Skip servers we configure manually
-          if server_name == 'lua_ls' or server_name == 'pylsp' or server_name == 'gopls' then
-            return
-          end
+    })
 
-          vim.lsp.config(server_name, {
-            on_attach = lsp_attach,
-            capabilities = lsp_capabilities,
-          })
-        end,
-      }
+    -- Global defaults applied to every server. Native LSP sets `omnifunc`
+    -- automatically on attach (0.11+), so no on_attach is needed for that.
+    vim.lsp.config('*', {
+      capabilities = lsp_capabilities,
     })
 
     -- Lua LSP settings
     vim.lsp.config('lua_ls', {
-      capabilities = lsp_capabilities,
-      on_attach = lsp_attach,
       settings = {
         Lua = {
+          -- `vim` global is resolved by lazydev; kept as a harmless fallback.
           diagnostics = {
             globals = { 'vim' },
           },
@@ -88,8 +63,6 @@ return {
 
     -- Python LSP settings (pylsp)
     vim.lsp.config('pylsp', {
-      capabilities = lsp_capabilities,
-      on_attach = lsp_attach,
       root_markers = {
         'pyproject.toml',
         'setup.py',
@@ -99,8 +72,10 @@ return {
       },
       settings = {
         pylsp = {
-          configurationSources = { "flake8", "pylint", "mypy" },
+          -- Only "pycodestyle" and "flake8" are valid configurationSources.
+          configurationSources = { "flake8" },
           plugins = {
+            -- Disable built-in linters/formatters; we drive flake8/pylint/mypy.
             pyflakes = { enabled = false },
             pycodestyle = { enabled = false },
             mccabe = { enabled = false },
@@ -111,63 +86,39 @@ return {
           },
         },
       },
-      before_init = function(params, config)
+      before_init = function(_, config)
         local root_dir = config.root_dir
         if not root_dir then return end
 
-        -- Initialize settings structure
-        config.settings = config.settings or {}
-        config.settings.pylsp = config.settings.pylsp or {}
-        config.settings.pylsp.plugins = config.settings.pylsp.plugins or {}
-
-        -- Disable default linters to avoid conflicts
-        config.settings.pylsp.plugins.pycodestyle = { enabled = false }
-        config.settings.pylsp.plugins.pyflakes = { enabled = false }
-        config.settings.pylsp.plugins.mccabe = { enabled = false }
-        config.settings.pylsp.plugins.yapf = { enabled = false }
-
+        local plugins = config.settings.pylsp.plugins
         local cq = vim.fs.joinpath(root_dir, '.code_quality')
 
-        -- Check for flake8 config
+        -- flake8: prefer .code_quality/.flake8 if present
         local flake8_config = vim.fs.joinpath(cq, '.flake8')
         if vim.uv.fs_stat(flake8_config) then
-          config.settings.pylsp.plugins.flake8 = {
-            enabled = true,
-            config = flake8_config,
-          }
+          plugins.flake8 = { enabled = true, config = flake8_config }
           config.settings.pylsp.configurationSources = { "flake8" }
-        else
-          config.settings.pylsp.plugins.flake8 = { enabled = true }
         end
 
-        -- Check for pylint config
+        -- pylint: prefer .code_quality/.pylintrc if present
         local pylintrc = vim.fs.joinpath(cq, '.pylintrc')
         if vim.uv.fs_stat(pylintrc) then
-          config.settings.pylsp.plugins.pylint = {
-            enabled = true,
-            args = { '--rcfile=' .. pylintrc }
-          }
-        else
-          config.settings.pylsp.plugins.pylint = { enabled = true }
+          plugins.pylint = { enabled = true, args = { '--rcfile=' .. pylintrc } }
         end
 
-        -- Check for mypy config
+        -- mypy: prefer .code_quality/mypy.ini if present
         local mypyini = vim.fs.joinpath(cq, 'mypy.ini')
         if vim.uv.fs_stat(mypyini) then
-          config.settings.pylsp.plugins.pylsp_mypy = {
+          plugins.pylsp_mypy = {
             enabled = true,
-            overrides = { '--config-file', mypyini, true }
+            overrides = { '--config-file', mypyini, true },
           }
-        else
-          config.settings.pylsp.plugins.pylsp_mypy = { enabled = true }
         end
       end,
     })
 
     -- Golang LSP settings
     vim.lsp.config('gopls', {
-      capabilities = lsp_capabilities,
-      on_attach = lsp_attach,
       root_markers = { 'go.mod', '.git' },
       settings = {
         gopls = {
@@ -180,66 +131,125 @@ return {
       },
     })
 
-    -- Autocommand for Go formatting and organizing imports on save
+    -- Organize imports + format on save (Go)
     vim.api.nvim_create_autocmd("BufWritePre", {
       pattern = "*.go",
       callback = function()
-        -- Format
-        vim.lsp.buf.format({ async = false })
+        local client = vim.lsp.get_clients({ bufnr = 0, name = "gopls" })[1]
+        if not client then return end
 
-        -- Organize imports
-        local params = vim.lsp.util.make_range_params()
+        -- Organize imports first, then format.
+        local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
         params.context = { only = { "source.organizeImports" } }
         local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
-
         for _, res in pairs(result or {}) do
           for _, action in pairs(res.result or {}) do
             if action.edit then
-              vim.lsp.util.apply_workspace_edit(action.edit, "utf-8")
-            elseif action.command then
-              vim.lsp.buf.execute_command(action.command)
+              vim.lsp.util.apply_workspace_edit(action.edit, client.offset_encoding)
+            end
+          end
+        end
+
+        vim.lsp.buf.format({ async = false })
+      end,
+    })
+
+    -- TypeScript / JavaScript (vtsls — a faster wrapper around tsserver)
+    vim.lsp.config('vtsls', {
+      root_markers = { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' },
+      settings = {
+        vtsls = {
+          experimental = {
+            completion = { enableServerSideFuzzyMatch = true },
+          },
+        },
+        typescript = {
+          updateImportsOnFileMove = { enabled = 'always' },
+          suggest = { completeFunctionCalls = true },
+          inlayHints = {
+            parameterNames = { enabled = 'literals' },
+            variableTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+          },
+        },
+        javascript = {
+          updateImportsOnFileMove = { enabled = 'always' },
+          inlayHints = {
+            parameterNames = { enabled = 'literals' },
+            variableTypes = { enabled = true },
+          },
+        },
+      },
+    })
+
+    -- ESLint (lint + fix-on-save). Let conform/prettier own formatting; let eslint
+    -- own lint autofixes.
+    vim.lsp.config('eslint', {
+      root_markers = {
+        '.eslintrc', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.json',
+        'eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs',
+        'package.json', '.git',
+      },
+      settings = {
+        workingDirectories = { mode = 'auto' },
+      },
+    })
+
+    -- Run eslint --fix on save (robust, doesn't depend on the EslintFixAll command).
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      pattern = { '*.ts', '*.tsx', '*.js', '*.jsx', '*.cjs', '*.mjs' },
+      callback = function()
+        local client = vim.lsp.get_clients({ bufnr = 0, name = 'eslint' })[1]
+        if not client then return end
+
+        local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
+        params.context = { only = { 'source.fixAll.eslint' }, diagnostics = {} }
+        local result = vim.lsp.buf_request_sync(0, 'textDocument/codeAction', params, 1000)
+        for _, res in pairs(result or {}) do
+          for _, action in pairs(res.result or {}) do
+            if action.edit then
+              vim.lsp.util.apply_workspace_edit(action.edit, client.offset_encoding)
             end
           end
         end
       end,
     })
 
-    -- Vim Diagnostics
+    -- Emmet (HTML/CSS/JSX abbreviation expansion: div.foo>ul>li*3 <C-y>,)
+    vim.lsp.config('emmet_language_server', {
+      filetypes = {
+        'html', 'css', 'scss', 'sass', 'less',
+        'javascriptreact', 'typescriptreact',
+      },
+    })
+
+    -- Diagnostics
     vim.diagnostic.config({
       virtual_text = true,
-      signs = true,
       update_in_insert = false,
       underline = true,
       severity_sort = true,
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = "\u{f015b} ",
+          [vim.diagnostic.severity.WARN]  = "\u{f002a} ",
+          [vim.diagnostic.severity.HINT]  = "\u{f0336} ",
+          [vim.diagnostic.severity.INFO]  = "\u{f0449} ",
+        },
+      },
       float = {
         border = 'rounded',
-        source = 'always',
+        source = true,
         header = '',
         prefix = '',
       },
     })
 
-    -- Optional: Configure diagnostic signs
-    local signs = { Error = "\u{f015b} ", Warn = "\u{f002a} ", Hint = "\u{f0336} ", Info = "\u{f0449} " }
-    for type, icon in pairs(signs) do
-      local hl = "DiagnosticSign" .. type
-      -- vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-    end
-
-    -- Globally configure all LSP floating preview popups
-    local open_floating_preview = vim.lsp.util.open_floating_preview
-    function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
-      opts = opts or {}
-      opts.border = opts.border or "rounded"
-      return open_floating_preview(contents, syntax, opts, ...)
-    end
-
-    -- Enable LSP servers
-    vim.lsp.enable('lua_ls')
-    vim.lsp.enable('pylsp')
-    vim.lsp.enable('gopls')
-    vim.lsp.enable('lemminx')
-    vim.lsp.enable('marksman')
-    vim.lsp.enable('quick_lint_js')
+    -- Enable any servers not covered by mason-lspconfig's automatic_enable.
+    -- (All of the above are in ensure_installed, so this is a no-op safety net;
+    -- keep entries here only for servers you install outside Mason.)
+    -- vim.lsp.enable({ 'lua_ls', 'pylsp', 'gopls', 'lemminx', 'marksman', 'quick_lint_js' })
   end
 }
+
