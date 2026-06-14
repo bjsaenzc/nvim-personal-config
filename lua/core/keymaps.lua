@@ -10,6 +10,43 @@ keymap.set("n", "<leader>ww", ":w<CR>") -- save
 keymap.set("n", "gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
+<<<<<<< Updated upstream
+=======
+keymap.set("n", "<leader>bd", ":bd<CR>") -- buffer delete
+keymap.set("n", "<leader>bD", ":bd!<CR>") -- buffer delete without saving, and quit
+keymap.set("n", "<leader>ba", ":%bd<CR>") -- Close all buffers (fails if there are unsaved changes)
+keymap.set("n", "<leader>bA", ":%bd!<CR>") -- Force close all buffers (discards unsaved changes)
+-- Close all buffers but current
+vim.keymap.set("n", "<leader>bo", function()
+  local current = vim.api.nvim_get_current_buf()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    -- check if buffer is valid and not the current one
+    if vim.api.nvim_buf_is_valid(buf) and buf ~= current then
+      vim.api.nvim_buf_delete(buf, {})
+    end
+  end
+end, { desc = "Close all buffers but current" })
+-- Close all but current (keep splits)
+-- 1. Save current (% is current file)
+-- 2. Delete all buffers (1,$ ranges 1 to end)
+-- 3. Open previous file (e#)
+-- 4. Delete the temp buffer created by step 2 (bd#)
+vim.keymap.set("n", "<leader>bx", ":%bd|e#|bd#<CR>", { desc = "Close all but current (keep splits)" })
+-- keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true }) -- Leaves terminal mode
+vim.api.nvim_create_autocmd('TermOpen', {
+  pattern = '*',
+  callback = function()
+    -- Esc: Terminal mode → Normal mode
+    keymap.set('t', '<Esc>', [[<C-\><C-n>]], { buffer = 0, noremap = true, silent = true })
+
+    -- <C-h/j/k/l>: move to other windows while in terminal mode (optional)
+    keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-j>', [[<C-\><C-n><C-w>j]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], { buffer = 0, noremap = true, silent = true })
+    keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { buffer = 0, noremap = true, silent = true })
+  end,
+})
+>>>>>>> Stashed changes
 
 -- Split window management
 keymap.set("n", "<leader>sv", "<C-w>v") -- split window vertically
