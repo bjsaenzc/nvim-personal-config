@@ -10,6 +10,8 @@ keymap.set("n", "<leader>ww", ":w<CR>") -- save
 keymap.set("n", "Gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
+keymap.set("n", "<leader>bd", ":bd<CR>") -- Close current buffer (fails if there are unsaved changes)
+keymap.set("n", "<leader>bD", ":bd!<CR>") -- Close current buffer and discard unsaved changes
 keymap.set("n", "<leader>ba", ":%bd<CR>") -- Close all buffers (fails if there are unsaved changes)
 keymap.set("n", "<leader>bA", ":%bd!<CR>") -- Force close all buffers (discards unsaved changes)
 -- Close all buffers but current
