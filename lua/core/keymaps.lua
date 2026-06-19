@@ -4,16 +4,16 @@ vim.g.mapleader = " "
 local keymap = vim.keymap
 
 -- General keymaps
-keymap.set("n", "<leader>wq", ":wq<CR>") -- save and quit
-keymap.set("n", "<leader>qq", ":q!<CR>") -- quit without saving
-keymap.set("n", "<leader>ww", ":w<CR>") -- save
+keymap.set("n", "<leader>wq", ":wq<CR>")       -- save and quit
+keymap.set("n", "<leader>qq", ":q!<CR>")       -- quit without saving
+keymap.set("n", "<leader>ww", ":w<CR>")        -- save
 keymap.set("n", "Gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
-keymap.set("n", "<leader>bn", ":bnext<CR>") -- jump to next buffer
-keymap.set("n", "<leader>bp", ":bprev<CR>") -- jump to prev buffer
-keymap.set("n", "<leader>bd", ":bd<CR>") -- Close current buffer (fails if there are unsaved changes)
-keymap.set("n", "<leader>bD", ":bd!<CR>") -- Close current buffer and discard unsaved changes
-keymap.set("n", "<leader>ba", ":%bd<CR>") -- Close all buffers (fails if there are unsaved changes)
-keymap.set("n", "<leader>bA", ":%bd!<CR>") -- Force close all buffers (discards unsaved changes)
+keymap.set("n", "<leader>bn", ":bnext<CR>")    -- jump to next buffer
+keymap.set("n", "<leader>bp", ":bprev<CR>")    -- jump to prev buffer
+keymap.set("n", "<leader>bd", ":bd<CR>")       -- Close current buffer (fails if there are unsaved changes)
+keymap.set("n", "<leader>bD", ":bd!<CR>")      -- Close current buffer and discard unsaved changes
+keymap.set("n", "<leader>ba", ":%bd<CR>")      -- Close all buffers (fails if there are unsaved changes)
+keymap.set("n", "<leader>bA", ":%bd!<CR>")     -- Force close all buffers (discards unsaved changes)
 -- Close all buffers but current
 vim.keymap.set("n", "<leader>bo", function()
   local current = vim.api.nvim_get_current_buf()
@@ -44,36 +44,65 @@ vim.api.nvim_create_autocmd('TermOpen', {
     keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { buffer = 0, noremap = true, silent = true })
   end,
 })
+keymap.set("n", "<leader>bt", "<C-w>T") -- Open current buffer in a new tab
+-- Takes current tab and moves it as a split buffer into another tab
+keymap.set("n", "<leader>ts", function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local total_tabs = vim.fn.tabpagenr("$")
+
+  if total_tabs < 2 then
+    print("Only one tab open")
+    return
+  end
+
+  -- Print tab list to help user choose
+  for i = 1, total_tabs do
+    local buflist = vim.fn.tabpagebuflist(i)
+    local bufname = vim.fn.bufname(buflist[i])
+    print(i .. ": " .. (buffname ~= "" and bufname or "[No Name]"))
+  end
+
+  local target = tonumber(vim.fn.input("Move to tab number: "))
+  if not target or target < 1 or target > total_tabs then
+    print("\nInvalid number")
+    return
+  end
+
+  vim.cmd("tabclose")
+  -- After closing, adjust target index if it was after current tab
+  vim.cmd("vsplit")
+  vim.api.nvim_set_current_buf(bufnr)
+end)
 
 -- Split window management
-keymap.set("n", "<leader>sv", "<C-w>v") -- split window vertically
-keymap.set("n", "<leader>sh", "<C-w>s") -- split window horizontally
-keymap.set("n", "<leader>se", "<C-w>=") -- make split windows equal width
+keymap.set("n", "<leader>sv", "<C-w>v")     -- split window vertically
+keymap.set("n", "<leader>sh", "<C-w>s")     -- split window horizontally
+keymap.set("n", "<leader>se", "<C-w>=")     -- make split windows equal width
 keymap.set("n", "<leader>sx", ":close<CR>") -- close split window
-keymap.set("n", "<leader>sj", "<C-w>-") -- make split window height shorter
-keymap.set("n", "<leader>sk", "<C-w>+") -- make split windows height taller
-keymap.set("n", "<leader>sl", "<C-w>>5") -- make split windows width bigger 
-keymap.set("n", "<leader>sH", "<C-w><5") -- make split windows width smaller
+keymap.set("n", "<leader>sj", "<C-w>-")     -- make split window height shorter
+keymap.set("n", "<leader>sk", "<C-w>+")     -- make split windows height taller
+keymap.set("n", "<leader>sl", "<C-w>>5")    -- make split windows width bigger
+keymap.set("n", "<leader>sH", "<C-w><5")    -- make split windows width smaller
 
 -- Tab management
-keymap.set("n", "<leader>to", ":tabnew<CR>") -- open a new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open a new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close a tab
-keymap.set("n", "<leader>tn", ":tabn<CR>") -- next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>") -- previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>")     -- next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>")     -- previous tab
 
 -- Diff keymaps
-keymap.set("n", "<leader>cc", ":diffput<CR>") -- put diff from current to other during diff
+keymap.set("n", "<leader>cc", ":diffput<CR>")   -- put diff from current to other during diff
 keymap.set("n", "<leader>cj", ":diffget 1<CR>") -- get diff from left (local) during merge
 keymap.set("n", "<leader>ck", ":diffget 3<CR>") -- get diff from right (remote) during merge
-keymap.set("n", "<leader>cn", "]c") -- next diff hunk
-keymap.set("n", "<leader>cp", "[c") -- previous diff hunk
+keymap.set("n", "<leader>cn", "]c")             -- next diff hunk
+keymap.set("n", "<leader>cp", "[c")             -- previous diff hunk
 
 -- Quickfix keymaps
-keymap.set("n", "<leader>qo", ":copen<CR>") -- open quickfix list
+keymap.set("n", "<leader>qo", ":copen<CR>")  -- open quickfix list
 keymap.set("n", "<leader>qf", ":cfirst<CR>") -- jump to first quickfix list item
-keymap.set("n", "<leader>qn", ":cnext<CR>") -- jump to next quickfix list item
-keymap.set("n", "<leader>qp", ":cprev<CR>") -- jump to prev quickfix list item
-keymap.set("n", "<leader>ql", ":clast<CR>") -- jump to last quickfix list item
+keymap.set("n", "<leader>qn", ":cnext<CR>")  -- jump to next quickfix list item
+keymap.set("n", "<leader>qp", ":cprev<CR>")  -- jump to prev quickfix list item
+keymap.set("n", "<leader>ql", ":clast<CR>")  -- jump to last quickfix list item
 keymap.set("n", "<leader>qc", ":cclose<CR>") -- close quickfix list
 
 -- Vim-maximizer
@@ -83,23 +112,23 @@ keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>") -- toggle maximize tab
 vim.keymap.set("n", "<leader>mv", "<cmd>Markview splitToggle<CR>", { silent = true })
 
 -- Nvim-tree
-keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>") -- toggle file explorer
-keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>") -- toggle focus to file explorer
+keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>")   -- toggle file explorer
+keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>")    -- toggle focus to file explorer
 keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>") -- find file in file explorer
 
 -- Telescope
-keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, {}) -- fuzzy find files in project
-keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep, {}) -- grep file contents in project
-keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, {}) -- fuzzy find open buffers
-keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, {}) -- fuzzy find help tags
+keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, {})                -- fuzzy find files in project
+keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep, {})                 -- grep file contents in project
+keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, {})                   -- fuzzy find open buffers
+keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, {})                 -- fuzzy find help tags
 keymap.set('n', '<leader>fs', require('telescope.builtin').current_buffer_fuzzy_find, {}) -- fuzzy find in current file buffer
 keymap.set('n', '<leader>fa', function()
   local path = vim.fn.expand("%:p:h")
   require('telescope.builtin').live_grep({ search_dirs = { path } })
-end, {})-- fuzzy grepfind contents in current buffer
-keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {}) -- fuzzy find LSP/class symbols
+end, {})                                                                             -- fuzzy grepfind contents in current buffer
+keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {})             -- fuzzy find LSP/class symbols
 keymap.set('n', '<leader>fo', require('telescope.builtin').lsp_document_symbols, {}) -- fuzzy find LSP/class symbols
-keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {}) -- fuzzy find LSP/incoming calls
+keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {})   -- fuzzy find LSP/incoming calls
 keymap.set('n', '<leader>fm', function()
   require('telescope.builtin').treesitter({ symbols = { 'function', 'method' } })
 end)
@@ -108,7 +137,7 @@ end)
 keymap.set('n', '<leader>ft', function() -- grep file contents in current nvim-tree node
   local success, node = pcall(function() return require('nvim-tree.lib').get_node_at_cursor() end)
   if not success or not node then return end;
-  require('telescope.builtin').live_grep({search_dirs = {node.absolute_path}})
+  require('telescope.builtin').live_grep({ search_dirs = { node.absolute_path } })
 end)
 
 -- Git-blame
@@ -131,15 +160,21 @@ keymap.set("n", "<leader>h9", function() require("harpoon.ui").nav_file(9) end)
 keymap.set("n", "<leader>xr", ":call VrcQuery()<CR>") -- Run REST query
 
 -- Kulala REST Client
-vim.keymap.set("n", "<leader>Rs", "<cmd>lua require('kulala').run()<cr>", { desc = "Send the request", silent = true })  -- Run the current request
-vim.keymap.set("n", "<leader>Ra", "<cmd>lua require('kulala').run_all()<cr>", { desc = "Send all requests", silent = true })  -- Run all requests in the file
-vim.keymap.set("n", "<leader>Re", "<cmd>lua require('kulala').set_selected_env()<cr>", { desc = "Select environment", silent = true })  -- Select environment
-vim.keymap.set("n", "<leader>Rt", "<cmd>lua require('kulala').toggle_view()<cr>", { desc = "Toggle headers/body", silent = true })  -- Toggle between showing body/headers
-vim.keymap.set("n", "<leader>Rp", "<cmd>lua require('kulala').jump_prev()<cr>", { desc = "Jump to previous request", silent = true })  -- Jump to the previous request
-vim.keymap.set("n", "<leader>Rn", "<cmd>lua require('kulala').jump_next()<cr>", { desc = "Jump to next request", silent = true })  -- Jump to the next request
-vim.keymap.set("n", "<leader>Rc", "<cmd>lua require('kulala').copy()<cr>", { desc = "Copy as cURL", silent = true })  -- Copy the current request as a cURL command to clipboard
-vim.keymap.set("n", "<leader>Rb", "<cmd>lua require('kulala').scratchpad()<cr>", { desc = "Open scratchpad", silent = true })  -- Open the scratchpad
-vim.keymap.set("n", "<leader>Rq", "<cmd>lua require('kulala').close()<cr>", { desc = "Close window", silent = true })  -- Close the Kulala window
+vim.keymap.set("n", "<leader>Rs", "<cmd>lua require('kulala').run()<cr>", { desc = "Send the request", silent = true }) -- Run the current request
+vim.keymap.set("n", "<leader>Ra", "<cmd>lua require('kulala').run_all()<cr>",
+  { desc = "Send all requests", silent = true })                                                                        -- Run all requests in the file
+vim.keymap.set("n", "<leader>Re", "<cmd>lua require('kulala').set_selected_env()<cr>",
+  { desc = "Select environment", silent = true })                                                                       -- Select environment
+vim.keymap.set("n", "<leader>Rt", "<cmd>lua require('kulala').toggle_view()<cr>",
+  { desc = "Toggle headers/body", silent = true })                                                                      -- Toggle between showing body/headers
+vim.keymap.set("n", "<leader>Rp", "<cmd>lua require('kulala').jump_prev()<cr>",
+  { desc = "Jump to previous request", silent = true })                                                                 -- Jump to the previous request
+vim.keymap.set("n", "<leader>Rn", "<cmd>lua require('kulala').jump_next()<cr>",
+  { desc = "Jump to next request", silent = true })                                                                     -- Jump to the next request
+vim.keymap.set("n", "<leader>Rc", "<cmd>lua require('kulala').copy()<cr>", { desc = "Copy as cURL", silent = true })    -- Copy the current request as a cURL command to clipboard
+vim.keymap.set("n", "<leader>Rb", "<cmd>lua require('kulala').scratchpad()<cr>",
+  { desc = "Open scratchpad", silent = true })                                                                          -- Open the scratchpad
+vim.keymap.set("n", "<leader>Rq", "<cmd>lua require('kulala').close()<cr>", { desc = "Close window", silent = true })   -- Close the Kulala window
 
 -- LSP (See nvim-lspconfig.lua)
 keymap.set('n', '<leader>gg', '<cmd>lua vim.lsp.buf.hover()<CR>')
@@ -172,16 +207,22 @@ keymap.set("n", "<leader>dc", "<cmd>lua require'dap'.continue()<cr>")
 keymap.set("n", "<leader>dj", "<cmd>lua require'dap'.step_over()<cr>")
 keymap.set("n", "<leader>dk", "<cmd>lua require'dap'.step_into()<cr>")
 keymap.set("n", "<leader>do", "<cmd>lua require'dap'.step_out()<cr>")
-keymap.set("n", '<leader>dd', function() require('dap').disconnect(); require('dapui').close(); end)
-keymap.set("n", '<leader>dt', function() require('dap').terminate(); require('dapui').close(); end)
+keymap.set("n", '<leader>dd', function()
+  require('dap').disconnect(); require('dapui').close();
+end)
+keymap.set("n", '<leader>dt', function()
+  require('dap').terminate(); require('dapui').close();
+end)
 keymap.set("n", "<leader>dr", "<cmd>lua require'dap'.repl.toggle()<cr>")
 keymap.set("n", "<leader>dl", "<cmd>lua require'dap'.run_last()<cr>")
 keymap.set("n", '<leader>di', function() require "dap.ui.widgets".hover() end)
-keymap.set("n", '<leader>d?', function() local widgets = require "dap.ui.widgets"; widgets.centered_float(widgets.scopes) end)
+keymap.set("n", '<leader>d?',
+  function()
+    local widgets = require "dap.ui.widgets"; widgets.centered_float(widgets.scopes)
+  end)
 keymap.set("n", '<leader>df', '<cmd>Telescope dap frames<cr>')
 keymap.set("n", '<leader>dh', '<cmd>Telescope dap commands<cr>')
-keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostics({default_text=":E:"}) end)
+keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostics({ default_text = ":E:" }) end)
 
 -- GH Github
 keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
-
