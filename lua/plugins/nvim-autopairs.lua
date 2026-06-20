@@ -1,14 +1,16 @@
--- Auto-completion of bracket/paren/quote pairs
+-- Auto-close pairs: (), [], {}, '', "", `` (nvim-autopairs)
+-- Pairs nicely with nvim-ts-autotag for JSX.
 return {
-  -- https://github.com/windwp/nvim-autopairs
   'windwp/nvim-autopairs',
-  -- event = "InsertEnter",
+  event = 'InsertEnter',
+  dependencies = { 'saghen/blink.cmp' },
   opts = {
-    check_ts = true, -- enable treesitter
+    check_ts = true, -- use treesitter to avoid pairing inside strings/comments
     ts_config = {
       lua = { "string" }, -- don't add pairs in lua string treesitter nodes
-      javascript = { "template_string" }, -- don't add pairs in javascript template_string
-    }
-  }
+      javascript = { 'template_string' },
+      typescript = { 'template_string' },
+    },
+    fast_wrap = {}, -- <M-e> to wrap the next object in a pair
+  },
 }
-
