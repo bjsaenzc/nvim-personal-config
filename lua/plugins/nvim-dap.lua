@@ -28,10 +28,15 @@ return {
       { "<leader>de", desc = "DAP UI: Eval expression" },
     },
 
+    -- Single source of truth for the whole DAP stack. nvim-dap-ui and
+    -- nvim-dap-virtual-text are declared ONLY here (as plain dependencies with
+    -- no opts/config), so lazy does NOT auto-call their setup — that happens
+    -- exactly once, manually, in lua/config/dap/init.lua.
     dependencies = {
-      "nvim-neotest/nvim-nio",        -- required by nvim-dap-ui
-      "rcarriga/nvim-dap-ui",         -- panels: variables, stack, breakpoints…
-      "theHamsta/nvim-dap-virtual-text", -- inline variable values while stepping
+      "nvim-neotest/nvim-nio",            -- required by nvim-dap-ui
+      "rcarriga/nvim-dap-ui",             -- panels: variables, stack, breakpoints…
+      "theHamsta/nvim-dap-virtual-text",  -- inline variable values while stepping
+      "nvim-telescope/telescope-dap.nvim", -- telescope integration (load_extension('dap') to enable)
     },
 
     config = function()
