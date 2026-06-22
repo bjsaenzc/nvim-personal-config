@@ -33,7 +33,7 @@ return {
         'quick_lint_js',
         'vtsls',
         'eslint',
-        'emmet-language-server',
+        'emmet_language_server',
       },
     })
 
