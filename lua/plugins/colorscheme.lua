@@ -1,98 +1,97 @@
-
 -- kanagawa theme (custom palette)
--- return {
--- -- https://github.com/rebelot/kanagawa.nvim
--- 'rebelot/kanagawa.nvim', -- you can replace this with your favorite colorscheme
---  lazy = false, -- we want the colorscheme to load immediately when starting neovim
---  priority = 1000, -- load the colorscheme before other non-lazy-loaded plugins
---  opts = {
---    -- replace this with your scheme-specific settings or remove to use the defaults
---    -- transparent = true,
---    background = {
---      -- light = "lotus",
---      dark = "wave", -- "wave, dragon"
---    },
---    colors = {
---      palette = {
---        -- background colors
---        sumiink0 = "#161616", -- modified
---        sumiink1 = "#181818", -- modified
---        sumiink2 = "#1a1a1a", -- modified
---        sumiink3 = "#1f1f1f", -- modified
---        sumiink4 = "#2a2a2a", -- modified
---        sumiink5 = "#363636", -- modified
---        sumiink6 = "#545454", -- modified
--- --
---        -- popup and floats
---        waveBlue1 = "#322C47", -- modified
---        waveBlue2 = "#4c4464", -- modified
--- --
---        -- Diff and Git
---        winterGreen = "#2B3328",
---        winterYellow = "#49443C",
---        winterRed = "#43242B",
---        winterBlue = "#252535",
---        autumnGreen = "#76A56A", -- modified
---        autumnRed = "#C34043",
---        autumnYellow = "#DCA561",
--- --
---        -- Diag
---        samuraiRed = "#E82424",
---        roninYellow = "#FF9E3B",
---        waveAqua1 = "#7E9CD8", -- modified
---        dragonBlue = "#7FB4CA", -- modified
--- --
---        -- Foreground and Comments
---        oldWhite = "#C8C093",
---        fujiWhite = "#F9E7C0", -- modified
---        fujiGray = "#727169",
---        oniViolet = "#BFA3E6", -- modified
---        oniViolet2 = "#BCACDB", -- modified
---        crystalBlue = "#8CABFF", -- modified
---        springViolet1 = "#938AA9",
---        springViolet2 = "#9CABCA",
---        springBlue = "#7FC4EF", -- modified
---        waveAqua2 = "#77BBDD", -- modified
--- --
---        springGreen = "#98BB6C",
---        boatYellow1 = "#938056",
---        boatYellow2 = "#C0A36E",
---        carpYellow = "#FFEE99", -- modified
--- --
---        sakuraPink = "#D27E99",
---        waveRed = "#E46876",
---        peachRed = "#FF5D62",
---        surimiOrange = "#FFAA44", -- modified
---        katanaGray = "#717C7C",
---      },
---    },
---  },
---  config = function(_, opts)
---    require('kanagawa').setup(opts) -- Replace this with your favorite colorscheme
---    vim.cmd("colorscheme kanagawa") -- Replace this with your favorite colorscheme
--- --
---    -- Custom diff colors
---    vim.cmd([[
---      autocmd VimEnter * hi DiffAdd guifg=#00FF00 guibg=#005500
---      autocmd VimEnter * hi DiffDelete guifg=#FF0000 guibg=#550000
---      autocmd VimEnter * hi DiffChange guifg=#CCCCCC guibg=#555555
---      autocmd VimEnter * hi DiffText guifg=#00FF00 guibg=#005500
---    ]])
--- --
---    -- Custom border colors
---    vim.cmd([[
---      autocmd ColorScheme * hi NormalFloat guifg=#F9E7C0 guibg=#1F1F1F
---      autocmd ColorScheme * hi FloatBorder guifg=#F9E7C0 guibg=#1F1F1F
---    ]])
---  end
--- }
+return {
+  -- https://github.com/rebelot/kanagawa.nvim
+  'rebelot/kanagawa.nvim', -- you can replace this with your favorite colorscheme
+  lazy = false,            -- we want the colorscheme to load immediately when starting neovim
+  priority = 1000,         -- load the colorscheme before other non-lazy-loaded plugins
+  opts = {
+    -- replace this with your scheme-specific settings or remove to use the defaults
+    -- transparent = true,
+    background = {
+      -- light = "lotus",
+      dark = "dragon", -- "wave, dragon"
+    },
+    colors = {
+      palette = {
+        -- background colors
+        sumiink0 = "#161616", -- modified
+        sumiink1 = "#181818", -- modified
+        sumiink2 = "#1a1a1a", -- modified
+        sumiink3 = "#1f1f1f", -- modified
+        sumiink4 = "#2a2a2a", -- modified
+        sumiink5 = "#363636", -- modified
+        sumiink6 = "#545454", -- modified
+        --
+        -- popup and floats
+        waveBlue1 = "#322C47", -- modified
+        waveBlue2 = "#4c4464", -- modified
+        --
+        -- Diff and Git
+        winterGreen = "#2B3328",
+        winterYellow = "#49443C",
+        winterRed = "#43242B",
+        winterBlue = "#252535",
+        autumnGreen = "#76A56A", -- modified
+        autumnRed = "#C34043",
+        autumnYellow = "#DCA561",
+        --
+        -- Diag
+        samuraiRed = "#E82424",
+        roninYellow = "#FF9E3B",
+        waveAqua1 = "#7E9CD8",  -- modified
+        dragonBlue = "#7FB4CA", -- modified
+        --
+        -- Foreground and Comments
+        oldWhite = "#C8C093",
+        fujiWhite = "#F9E7C0",   -- modified
+        fujiGray = "#727169",
+        oniViolet = "#BFA3E6",   -- modified
+        oniViolet2 = "#BCACDB",  -- modified
+        crystalBlue = "#8CABFF", -- modified
+        springViolet1 = "#938AA9",
+        springViolet2 = "#9CABCA",
+        springBlue = "#7FC4EF", -- modified
+        waveAqua2 = "#77BBDD",  -- modified
+        --
+        springGreen = "#98BB6C",
+        boatYellow1 = "#938056",
+        boatYellow2 = "#C0A36E",
+        carpYellow = "#FFEE99", -- modified
+        --
+        sakuraPink = "#D27E99",
+        waveRed = "#E46876",
+        peachRed = "#FF5D62",
+        surimiOrange = "#FFAA44", -- modified
+        katanaGray = "#717C7C",
+      },
+    },
+  },
+  config = function(_, opts)
+    require('kanagawa').setup(opts) -- Replace this with your favorite colorscheme
+    vim.cmd("colorscheme kanagawa") -- Replace this with your favorite colorscheme
+    --
+    -- Custom diff colors
+    vim.cmd([[
+     autocmd VimEnter * hi DiffAdd guifg=#00FF00 guibg=#005500
+     autocmd VimEnter * hi DiffDelete guifg=#FF0000 guibg=#550000
+     autocmd VimEnter * hi DiffChange guifg=#CCCCCC guibg=#555555
+     autocmd VimEnter * hi DiffText guifg=#00FF00 guibg=#005500
+   ]])
+    --
+    -- Custom border colors
+    vim.cmd([[
+     autocmd ColorScheme * hi NormalFloat guifg=#F9E7C0 guibg=#1F1F1F
+     autocmd ColorScheme * hi FloatBorder guifg=#F9E7C0 guibg=#1F1F1F
+   ]])
+  end
+}
 
 -- Kanagawa Theme (Original)
 -- return {
 --   -- https://github.com/rebelot/kanagawa.nvim
 --   'rebelot/kanagawa.nvim', -- You can replace this with your favorite colorscheme
---   lazy = false, -- We want the colorscheme to load immediately when starting Neovim
---   priority = 1000, -- Load the colorscheme before other non-lazy-loaded plugins
+--   lazy = false,            -- We want the colorscheme to load immediately when starting Neovim
+--   priority = 1000,         -- Load the colorscheme before other non-lazy-loaded plugins
 --   opts = {
 --     -- Replace this with your scheme-specific settings or remove to use the defaults
 --     -- transparent = true,
@@ -108,21 +107,21 @@
 -- }
 
 -- Tokyo Night Theme
---return {
---  -- https://github.com/folke/tokyonight.nvim
---  'folke/tokyonight.nvim', -- You can replace this with your favorite colorscheme
---  lazy = false, -- We want the colorscheme to load immediately when starting Neovim
---  priority = 1000, -- Load the colorscheme before other non-lazy-loaded plugins
---  opts = {
---    -- Replace this with your scheme-specific settings or remove to use the defaults
---    -- transparent = true,
---    style = "night", -- other variations "storm, night, moon, day"
---  },
---  config = function(_, opts)
---    require('tokyonight').setup(opts) -- Replace this with your favorite colorscheme
---    vim.cmd("colorscheme tokyonight") -- Replace this with your favorite colorscheme
---  end
---}
+-- return {
+--   -- https://github.com/folke/tokyonight.nvim
+--   'folke/tokyonight.nvim', -- You can replace this with your favorite colorscheme
+--   lazy = false,            -- We want the colorscheme to load immediately when starting Neovim
+--   priority = 1000,         -- Load the colorscheme before other non-lazy-loaded plugins
+--   opts = {
+--     -- Replace this with your scheme-specific settings or remove to use the defaults
+--     -- transparent = true,
+--     style = "night", -- other variations "storm, night, moon, day"
+--   },
+--   config = function(_, opts)
+--     require('tokyonight').setup(opts) -- Replace this with your favorite colorscheme
+--     vim.cmd("colorscheme tokyonight") -- Replace this with your favorite colorscheme
+--   end
+-- }
 
 -- Catppuccin Theme
 -- return {
@@ -211,49 +210,49 @@
 -- }
 
 -- Nightfox - Carbonfox
-return {
-  "EdenEast/nightfox.nvim",
-  opts = {
-    options = {
-      -- Compiled file's destination location
-      compile_path = vim.fn.stdpath("cache") .. "/nightfox",
-      compile_file_suffix = "_compiled",
-      transparent = false, -- Disable setting background
-      terminal_colors = true, -- Set terminal colors (vim.g.terminal_color_*) used in `:terminal`
-      dim_inactive = false, -- Non focus panes set to alternative background
-      module_default = true, -- Default enable value for modules
-      colorbind = {
-        enable = false,
-        severity = {
-          protan = 0, -- Severity [0,1] for protan (red)
-          deutan = 0, -- Severity [0,1] for deutan (green)
-          tritan = 0, -- Severity [0,1] for tritan (blue)
-        },
-      },
-      styles = {
-        comments = "italic",
-        conditionals ="NONE",
-        constants = "NONE",
-        functions ="NONE",
-        keywords = "NONE",
-        numbers = "NONE",
-        operators = "NONE",
-        strings = "NONE",
-        types = "NONE",
-        variables = "NONE",
-      },
-      inverse = {
-        match_paren = false,
-        visual = false,
-        search = false,
-      },
-    },
-    palettes = {},
-    specs = {},
-    groups = {},
-  },
-  config = function(_, opts)
-    require("nightfox").setup(opts)
-    vim.cmd("colorscheme carbonfox")
-  end,
-}
+-- return {
+--   "EdenEast/nightfox.nvim",
+--   opts = {
+--     options = {
+--       -- Compiled file's destination location
+--       compile_path = vim.fn.stdpath("cache") .. "/nightfox",
+--       compile_file_suffix = "_compiled",
+--       transparent = false, -- Disable setting background
+--       terminal_colors = true, -- Set terminal colors (vim.g.terminal_color_*) used in `:terminal`
+--       dim_inactive = false, -- Non focus panes set to alternative background
+--       module_default = true, -- Default enable value for modules
+--       colorbind = {
+--         enable = false,
+--         severity = {
+--           protan = 0, -- Severity [0,1] for protan (red)
+--           deutan = 0, -- Severity [0,1] for deutan (green)
+--           tritan = 0, -- Severity [0,1] for tritan (blue)
+--         },
+--       },
+--       styles = {
+--         comments = "italic",
+--         conditionals ="NONE",
+--         constants = "NONE",
+--         functions ="NONE",
+--         keywords = "NONE",
+--         numbers = "NONE",
+--         operators = "NONE",
+--         strings = "NONE",
+--         types = "NONE",
+--         variables = "NONE",
+--       },
+--       inverse = {
+--         match_paren = false,
+--         visual = false,
+--         search = false,
+--       },
+--     },
+--     palettes = {},
+--     specs = {},
+--     groups = {},
+--   },
+--   config = function(_, opts)
+--     require("nightfox").setup(opts)
+--     vim.cmd("colorscheme carbonfox")
+--   end,
+-- }
