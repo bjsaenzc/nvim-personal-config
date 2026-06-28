@@ -6,7 +6,7 @@ return {
   end,
   config = function(_, opts)
     require("kulala").setup(opts)
-    vim.api_create_autocmd("WinEnter", {
+    vim.api.nvim.nvim_create_autocmd("WinEnter", {
       callback = function()
         local buf = vim.api.nvim_get_current_buf()
         if vim.api.nvim_get_option_value("filetype", { buf = buf }) == "kulala_ui" then
@@ -23,7 +23,7 @@ return {
     ui = {
       number = true,
       max_request_size = 10 * 1024 * 1024, -- 10MB
-      max_response_size = 20000000, -- 1MB, adjust as needed
+      max_response_size = 20000000,        -- 1MB, adjust as needed
     },
   },
 }
