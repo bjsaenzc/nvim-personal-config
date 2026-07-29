@@ -1,90 +1,90 @@
 -- kanagawa theme (custom palette)
-return {
-  -- https://github.com/rebelot/kanagawa.nvim
-  'rebelot/kanagawa.nvim', -- you can replace this with your favorite colorscheme
-  lazy = false,            -- we want the colorscheme to load immediately when starting neovim
-  priority = 1000,         -- load the colorscheme before other non-lazy-loaded plugins
-  opts = {
-    -- replace this with your scheme-specific settings or remove to use the defaults
-    -- transparent = true,
-    background = {
-      -- light = "lotus",
-      dark = "dragon", -- "wave, dragon"
-    },
-    colors = {
-      palette = {
-        -- background colors
-        sumiink0 = "#161616", -- modified
-        sumiink1 = "#181818", -- modified
-        sumiink2 = "#1a1a1a", -- modified
-        sumiink3 = "#1f1f1f", -- modified
-        sumiink4 = "#2a2a2a", -- modified
-        sumiink5 = "#363636", -- modified
-        sumiink6 = "#545454", -- modified
-        --
-        -- popup and floats
-        waveBlue1 = "#322C47", -- modified
-        waveBlue2 = "#4c4464", -- modified
-        --
-        -- Diff and Git
-        winterGreen = "#2B3328",
-        winterYellow = "#49443C",
-        winterRed = "#43242B",
-        winterBlue = "#252535",
-        autumnGreen = "#76A56A", -- modified
-        autumnRed = "#C34043",
-        autumnYellow = "#DCA561",
-        --
-        -- Diag
-        samuraiRed = "#E82424",
-        roninYellow = "#FF9E3B",
-        waveAqua1 = "#7E9CD8",  -- modified
-        dragonBlue = "#7FB4CA", -- modified
-        --
-        -- Foreground and Comments
-        oldWhite = "#C8C093",
-        fujiWhite = "#F9E7C0",   -- modified
-        fujiGray = "#727169",
-        oniViolet = "#BFA3E6",   -- modified
-        oniViolet2 = "#BCACDB",  -- modified
-        crystalBlue = "#8CABFF", -- modified
-        springViolet1 = "#938AA9",
-        springViolet2 = "#9CABCA",
-        springBlue = "#7FC4EF", -- modified
-        waveAqua2 = "#77BBDD",  -- modified
-        --
-        springGreen = "#98BB6C",
-        boatYellow1 = "#938056",
-        boatYellow2 = "#C0A36E",
-        carpYellow = "#FFEE99", -- modified
-        --
-        sakuraPink = "#D27E99",
-        waveRed = "#E46876",
-        peachRed = "#FF5D62",
-        surimiOrange = "#FFAA44", -- modified
-        katanaGray = "#717C7C",
-      },
-    },
-  },
-  config = function(_, opts)
-    require('kanagawa').setup(opts) -- Replace this with your favorite colorscheme
-    vim.cmd("colorscheme kanagawa") -- Replace this with your favorite colorscheme
-    --
-    -- Custom diff colors
-    vim.cmd([[
-     autocmd VimEnter * hi DiffAdd guifg=#00FF00 guibg=#005500
-     autocmd VimEnter * hi DiffDelete guifg=#FF0000 guibg=#550000
-     autocmd VimEnter * hi DiffChange guifg=#CCCCCC guibg=#555555
-     autocmd VimEnter * hi DiffText guifg=#00FF00 guibg=#005500
-   ]])
-    --
-    -- Custom border colors
-    vim.cmd([[
-     autocmd ColorScheme * hi NormalFloat guifg=#F9E7C0 guibg=#1F1F1F
-     autocmd ColorScheme * hi FloatBorder guifg=#F9E7C0 guibg=#1F1F1F
-   ]])
-  end
-}
+-- return {
+--   -- https://github.com/rebelot/kanagawa.nvim
+--   'rebelot/kanagawa.nvim', -- you can replace this with your favorite colorscheme
+--   lazy = false,            -- we want the colorscheme to load immediately when starting neovim
+--   priority = 1000,         -- load the colorscheme before other non-lazy-loaded plugins
+--   opts = {
+--     -- replace this with your scheme-specific settings or remove to use the defaults
+--     -- transparent = true,
+--     background = {
+--       -- light = "lotus",
+--       dark = "dragon", -- "wave, dragon"
+--     },
+--     colors = {
+--       palette = {
+--         -- background colors
+--         sumiink0 = "#161616", -- modified
+--         sumiink1 = "#181818", -- modified
+--         sumiink2 = "#1a1a1a", -- modified
+--         sumiink3 = "#1f1f1f", -- modified
+--         sumiink4 = "#2a2a2a", -- modified
+--         sumiink5 = "#363636", -- modified
+--         sumiink6 = "#545454", -- modified
+--         --
+--         -- popup and floats
+--         waveBlue1 = "#322C47", -- modified
+--         waveBlue2 = "#4c4464", -- modified
+--         --
+--         -- Diff and Git
+--         winterGreen = "#2B3328",
+--         winterYellow = "#49443C",
+--         winterRed = "#43242B",
+--         winterBlue = "#252535",
+--         autumnGreen = "#76A56A", -- modified
+--         autumnRed = "#C34043",
+--         autumnYellow = "#DCA561",
+--         --
+--         -- Diag
+--         samuraiRed = "#E82424",
+--         roninYellow = "#FF9E3B",
+--         waveAqua1 = "#7E9CD8",  -- modified
+--         dragonBlue = "#7FB4CA", -- modified
+--         --
+--         -- Foreground and Comments
+--         oldWhite = "#C8C093",
+--         fujiWhite = "#F9E7C0",   -- modified
+--         fujiGray = "#727169",
+--         oniViolet = "#BFA3E6",   -- modified
+--         oniViolet2 = "#BCACDB",  -- modified
+--         crystalBlue = "#8CABFF", -- modified
+--         springViolet1 = "#938AA9",
+--         springViolet2 = "#9CABCA",
+--         springBlue = "#7FC4EF", -- modified
+--         waveAqua2 = "#77BBDD",  -- modified
+--         --
+--         springGreen = "#98BB6C",
+--         boatYellow1 = "#938056",
+--         boatYellow2 = "#C0A36E",
+--         carpYellow = "#FFEE99", -- modified
+--         --
+--         sakuraPink = "#D27E99",
+--         waveRed = "#E46876",
+--         peachRed = "#FF5D62",
+--         surimiOrange = "#FFAA44", -- modified
+--         katanaGray = "#717C7C",
+--       },
+--     },
+--   },
+--   config = function(_, opts)
+--     require('kanagawa').setup(opts) -- Replace this with your favorite colorscheme
+--     vim.cmd("colorscheme kanagawa") -- Replace this with your favorite colorscheme
+--     --
+--     -- Custom diff colors
+--     vim.cmd([[
+--      autocmd VimEnter * hi DiffAdd guifg=#00FF00 guibg=#005500
+--      autocmd VimEnter * hi DiffDelete guifg=#FF0000 guibg=#550000
+--      autocmd VimEnter * hi DiffChange guifg=#CCCCCC guibg=#555555
+--      autocmd VimEnter * hi DiffText guifg=#00FF00 guibg=#005500
+--    ]])
+--     --
+--     -- Custom border colors
+--     vim.cmd([[
+--      autocmd ColorScheme * hi NormalFloat guifg=#F9E7C0 guibg=#1F1F1F
+--      autocmd ColorScheme * hi FloatBorder guifg=#F9E7C0 guibg=#1F1F1F
+--    ]])
+--   end
+-- }
 
 -- Kanagawa Theme (Original)
 -- return {
@@ -256,3 +256,15 @@ return {
 --     vim.cmd("colorscheme carbonfox")
 --   end,
 -- }
+
+-- VS Code - arctic
+return {
+	"rockyzhang24/arctic.nvim",
+	dependencies = { "rktjmp/lush.nvim" },
+	name = "arctic",
+	branch = "main",
+	priority = 1000,
+	config = function()
+		vim.cmd("colorscheme arctic")
+	end,
+}
