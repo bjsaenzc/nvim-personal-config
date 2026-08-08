@@ -6,7 +6,7 @@ return {
   end,
   config = function(_, opts)
     require("kulala").setup(opts)
-    vim.api.nvim.nvim_create_autocmd("WinEnter", {
+    vim.api.nvim_create_autocmd("WinEnter", {
       callback = function()
         local buf = vim.api.nvim_get_current_buf()
         if vim.api.nvim_get_option_value("filetype", { buf = buf }) == "kulala_ui" then
