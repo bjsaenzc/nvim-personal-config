@@ -2,7 +2,7 @@
 return {
   -- https://github.com/nvim-treesitter/nvim-treesitter
   'nvim-treesitter/nvim-treesitter',
-  -- event = 'VeryLazy',
+  event = { 'BufReadPre', 'BufNewFile' },
   dependencies = {
     -- https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     'nvim-treesitter/nvim-treesitter-textobjects',
@@ -11,7 +11,7 @@ return {
   opts = {
     highlight = {
       enable = true,
-      additional_vim_regex_highlighting = true,
+      additional_vim_regex_highlighting = false, -- running legacy regex syntax on top of treesitter doubles highlight work
     },
     indent = { enable = true },
     auto_install = true, -- automatically install syntax support when entering new file type buffer
@@ -19,8 +19,7 @@ return {
       'python',
       'javascript',
       'typescript',
-      'tsx',
-      'jsx',
+      'tsx', -- also covers JSX (there is no separate JSX parser)
       'go',
       'html',
       'css',
@@ -28,8 +27,15 @@ return {
       'lua',
       'vim',
       'markdown',
+      'markdown_inline', -- required by render-markdown.nvim
       'vimdoc',
       'query',
+      'bash',
+      'yaml',
+      'toml',
+      'regex',
+      'c',
+      'java',
     },
   },
 }

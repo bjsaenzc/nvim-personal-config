@@ -404,7 +404,8 @@ Hard dependencies only; everything else can reorder. The only cross-phase coupli
 
 | Date | Task | Result | V1 (ms) | V2 (loaded/total) |
 |---|---|---|---|---|
-| 2026-08-16 | Baseline (audit) | — | 257.6 | 44/67 |
-|  |  |  |  |  |
+| 2026-08-16 | Baseline (audit) | — | 257.6 (cold) | 44/67 |
+| 2026-08-16 | Baseline (re-measured pre-P1) | — | 156.8 (warm median) | 44/67 |
+| 2026-08-16 | P1-13 gate — Phase 1 complete | All AC pass; V4 no dupes; V5 exit=1; `:checkhealth lazy` clean | **59.5 (warm median)** | **13/59** |
 
 > Keep this table updated at each phase gate; it is the objective record that the plan's targets (≤150 ms, ≤20 startup plugins, zero keymap conflicts, full language matrix) were met.

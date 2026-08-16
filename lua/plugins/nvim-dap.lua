@@ -25,7 +25,7 @@ return {
       { "<leader>dt", desc = "DAP: Terminate" },
       { "<leader>dp", desc = "DAP: Pause thread" },
       { "<leader>du", desc = "DAP UI: Toggle" },
-      { "<leader>de", desc = "DAP UI: Eval expression" },
+      { "<leader>dE", desc = "DAP UI: Eval expression" },
     },
 
     -- Single source of truth for the whole DAP stack. nvim-dap-ui and

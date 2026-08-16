@@ -1,5 +1,6 @@
 return {
     "ldelossa/gh.nvim",
+    cmd = { "GH", "GHOpenPR", "GHOpenIssue", "GHSearchPRs", "GHSearchIssues", "GHReviewStart" },
     dependencies = {
         {
         "ldelossa/litee.nvim",

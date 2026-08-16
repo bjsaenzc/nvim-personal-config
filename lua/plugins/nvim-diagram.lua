@@ -1,5 +1,6 @@
 return {
   "3rd/diagram.nvim",
+  ft = "markdown",
   dependencies = { "3rd/image.nvim" },
   config = function()
     require("diagram").setup({

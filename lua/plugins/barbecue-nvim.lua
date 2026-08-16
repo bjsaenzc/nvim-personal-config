@@ -4,6 +4,7 @@ return {
   "utilyre/barbecue.nvim",
   name = "barbecue",
   version = "*",
+  event = "VeryLazy",
   dependencies = {
   -- https://github.com/SmiteshP/nvim-navic
     "SmiteshP/nvim-navic",

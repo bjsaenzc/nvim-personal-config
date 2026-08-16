@@ -111,10 +111,11 @@ map("<leader>dp", dap.pause,      "DAP: Pause thread")
 
 -- UI
 map("<leader>du", dapui.toggle, "DAP UI: Toggle panels")
-map("<leader>de", function() dapui.eval(nil, { enter = true }) end, "DAP UI: Eval under cursor")
+-- <leader>dE (capital E): <leader>de belongs to Telescope error diagnostics
+map("<leader>dE", function() dapui.eval(nil, { enter = true }) end, "DAP UI: Eval under cursor")
 
 -- Visual-mode eval
-vim.keymap.set("v", "<leader>de", function() dapui.eval() end, { silent = true, desc = "DAP UI: Eval selection" })
+vim.keymap.set("v", "<leader>dE", function() dapui.eval() end, { silent = true, desc = "DAP UI: Eval selection" })
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. Language adapters (order does not matter)

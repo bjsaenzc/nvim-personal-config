@@ -28,7 +28,7 @@ return {
     { "<leader>ghp", function() Snacks.picker.gh_pr() end, desc = "GitHub Pull Requests (open)" },
     { "<leader>ghP", function() Snacks.picker.gh_pr({ state = "all" }) end, desc = "GitHub Pull Requests (all)" },
     { "<leader>Gf", function() Snacks.picker.git_files() end, desc = "Snacks: Git files picker" },
-    { "<leader>git", function() Snacks.lazygit() end, desc = "Snacks: Lazygit" },
+    { "<leader>gG", function() Snacks.lazygit() end, desc = "Snacks: Lazygit" }, -- not <leader>git: prefix-delays <leader>gi (goto implementation)
     { "<leader>Gs", function() Snacks.git.status() end, desc = "Snacks: Git status" },
   },
 }

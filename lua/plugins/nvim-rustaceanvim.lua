@@ -25,7 +25,7 @@ return {
 
             map('<leader>ca', function() vim.cmd.RustLsp('codeAction') end, 'Code Action')
             map('<leader>dr', function() vim.cmd.RustLsp('debuggables') end, 'Debuggables')
-            map('<leader>rr', function() vim.cmd.RustLsp('runnables') end, 'Runnables')
+            map('<leader>rx', function() vim.cmd.RustLsp('runnables') end, 'Runnables') -- not <leader>rr: that is LSP rename
             map('K', function() vim.cmd.RustLsp { 'hover', 'actions' } end, 'Hover Actions')
 
             -- 2. Set up auto-formatting on save

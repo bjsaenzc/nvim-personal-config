@@ -1,5 +1,4 @@
--- Set leader key to space
-vim.g.mapleader = " "
+-- Leader key (space) is set in init.lua, before lazy initializes
 
 local keymap = vim.keymap
 
@@ -7,7 +6,6 @@ local keymap = vim.keymap
 keymap.set("n", "<leader>wq", ":wq<CR>")       -- save and quit
 keymap.set("n", "<leader>qq", ":q!<CR>")       -- quit without saving
 keymap.set("n", "<leader>ww", ":w<CR>")        -- save
-keymap.set("n", "Gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
 keymap.set("n", "<leader>bn", ":bnext<CR>")    -- jump to next buffer
 keymap.set("n", "<leader>bp", ":bprev<CR>")    -- jump to prev buffer
 keymap.set("n", "<leader>bd", ":bd<CR>")       -- Close current buffer (fails if there are unsaved changes)
@@ -58,8 +56,9 @@ keymap.set("n", "<leader>ts", function()
   -- Print tab list to help user choose
   for i = 1, total_tabs do
     local buflist = vim.fn.tabpagebuflist(i)
-    local bufname = vim.fn.bufname(buflist[i])
-    print(i .. ": " .. (buffname ~= "" and bufname or "[No Name]"))
+    -- buffer shown in the tab's current window (buflist is indexed by window, not tab)
+    local bufname = vim.fn.bufname(buflist[vim.fn.tabpagewinnr(i)])
+    print(i .. ": " .. (bufname ~= "" and bufname or "[No Name]"))
   end
 
   local target = tonumber(vim.fn.input("Move to tab number: "))
@@ -105,59 +104,17 @@ keymap.set("n", "<leader>qp", ":cprev<CR>")  -- jump to prev quickfix list item
 keymap.set("n", "<leader>ql", ":clast<CR>")  -- jump to last quickfix list item
 keymap.set("n", "<leader>qc", ":cclose<CR>") -- close quickfix list
 
--- Vim-maximizer
-keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>") -- toggle maximize tab
-
--- Nvim-Peek (Markdown Preview)
-vim.keymap.set("n", "<leader>mv", "<cmd>Markview splitToggle<CR>", { silent = true })
-
 -- Nvim-tree
 keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>")   -- toggle file explorer
 keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>")    -- toggle focus to file explorer
 keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>") -- find file in file explorer
 
--- Telescope
-keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, {})                -- fuzzy find files in project
-keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep, {})                 -- grep file contents in project
-keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, {})                   -- fuzzy find open buffers
-keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, {})                 -- fuzzy find help tags
-keymap.set('n', '<leader>fs', require('telescope.builtin').current_buffer_fuzzy_find, {}) -- fuzzy find in current file buffer
-keymap.set('n', '<leader>fa', function()
-  local path = vim.fn.expand("%:p:h")
-  require('telescope.builtin').live_grep({ search_dirs = { path } })
-end, {})                                                                             -- fuzzy grepfind contents in current buffer
-keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {})             -- fuzzy find LSP/class symbols
-keymap.set('n', '<leader>fo', require('telescope.builtin').lsp_document_symbols, {}) -- fuzzy find LSP/class symbols
-keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {})   -- fuzzy find LSP/incoming calls
-keymap.set('n', '<leader>fm', function()
-  require('telescope.builtin').treesitter({ symbols = { 'function', 'method' } })
-end)
--- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({default_text=":method:"}) end) -- fuzzy find methods in current class
--- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({symbols={'function'}}) end) -- fuzzy find methods in current class
-keymap.set('n', '<leader>ft', function() -- grep file contents in current nvim-tree node
-  local success, node = pcall(function() return require('nvim-tree.lib').get_node_at_cursor() end)
-  if not success or not node then return end;
-  require('telescope.builtin').live_grep({ search_dirs = { node.absolute_path } })
-end)
+-- Telescope keymaps live in lua/plugins/telescope-nvim.lua (`keys` table, lazy-loads the plugin)
 
 -- Git-blame
 keymap.set("n", "<leader>gb", ":GitBlameToggle<CR>") -- toggle git blame
 
--- Harpoon
-keymap.set("n", "<leader>ha", require("harpoon.mark").add_file)
-keymap.set("n", "<leader>hh", require("harpoon.ui").toggle_quick_menu)
-keymap.set("n", "<leader>h1", function() require("harpoon.ui").nav_file(1) end)
-keymap.set("n", "<leader>h2", function() require("harpoon.ui").nav_file(2) end)
-keymap.set("n", "<leader>h3", function() require("harpoon.ui").nav_file(3) end)
-keymap.set("n", "<leader>h4", function() require("harpoon.ui").nav_file(4) end)
-keymap.set("n", "<leader>h5", function() require("harpoon.ui").nav_file(5) end)
-keymap.set("n", "<leader>h6", function() require("harpoon.ui").nav_file(6) end)
-keymap.set("n", "<leader>h7", function() require("harpoon.ui").nav_file(7) end)
-keymap.set("n", "<leader>h8", function() require("harpoon.ui").nav_file(8) end)
-keymap.set("n", "<leader>h9", function() require("harpoon.ui").nav_file(9) end)
-
--- Vim REST Console
-keymap.set("n", "<leader>xr", ":call VrcQuery()<CR>") -- Run REST query
+-- Harpoon keymaps live in lua/plugins/harpoon.lua (`keys` table, lazy-loads the plugin)
 
 -- Kulala REST Client
 vim.keymap.set("n", "<leader>Rs", "<cmd>lua require('kulala').run()<cr>", { desc = "Send the request", silent = true }) -- Run the current request
@@ -195,34 +152,8 @@ keymap.set('n', '<leader>gl', '<cmd>lua vim.diagnostic.open_float()<CR>')
 keymap.set('n', '<leader>gp', '<cmd>lua vim.diagnostic.goto_prev()<CR>')
 keymap.set('n', '<leader>gn', '<cmd>lua vim.diagnostic.goto_next()<CR>')
 keymap.set('n', '<leader>tr', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
-keymap.set('i', '<C-Space>', '<cmd>lua vim.lsp.buf.completion()<CR>')
 
--- Debugging
-keymap.set("n", "<leader>bb", "<cmd>lua require'dap'.toggle_breakpoint()<cr>")
-keymap.set("n", "<leader>bc", "<cmd>lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<cr>")
-keymap.set("n", "<leader>bl", "<cmd>lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<cr>")
-keymap.set("n", '<leader>br', "<cmd>lua require'dap'.clear_breakpoints()<cr>")
-keymap.set("n", '<leader>ba', '<cmd>Telescope dap list_breakpoints<cr>')
-keymap.set("n", "<leader>dc", "<cmd>lua require'dap'.continue()<cr>")
-keymap.set("n", "<leader>dj", "<cmd>lua require'dap'.step_over()<cr>")
-keymap.set("n", "<leader>dk", "<cmd>lua require'dap'.step_into()<cr>")
-keymap.set("n", "<leader>do", "<cmd>lua require'dap'.step_out()<cr>")
-keymap.set("n", '<leader>dd', function()
-  require('dap').disconnect(); require('dapui').close();
-end)
-keymap.set("n", '<leader>dt', function()
-  require('dap').terminate(); require('dapui').close();
-end)
-keymap.set("n", "<leader>dr", "<cmd>lua require'dap'.repl.toggle()<cr>")
-keymap.set("n", "<leader>dl", "<cmd>lua require'dap'.run_last()<cr>")
-keymap.set("n", '<leader>di', function() require "dap.ui.widgets".hover() end)
-keymap.set("n", '<leader>d?',
-  function()
-    local widgets = require "dap.ui.widgets"; widgets.centered_float(widgets.scopes)
-  end)
-keymap.set("n", '<leader>df', '<cmd>Telescope dap frames<cr>')
-keymap.set("n", '<leader>dh', '<cmd>Telescope dap commands<cr>')
-keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostics({ default_text = ":E:" }) end)
+-- Debugging keymaps live in lua/config/dap/init.lua (loaded via nvim-dap.lua `keys` triggers)
 
 -- GH Github
 keymap.set("n", '<leader>GH', "<cmd>GH<cr>")

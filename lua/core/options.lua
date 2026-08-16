@@ -12,10 +12,22 @@ opt.tabstop = 2
 opt.shiftwidth = 2
 opt.expandtab = true
 opt.autoindent = true
-vim.bo.softtabstop = 2
+opt.softtabstop = 2
 
 -- Line Wrapping
 opt.wrap = true
+
+-- Persistent undo across sessions
+opt.undofile = true
+
+-- Keep context lines visible around the cursor
+opt.scrolloff = 8
+
+-- Live preview of :substitute in a split
+opt.inccommand = "split"
+
+-- Ask instead of failing on :q with unsaved changes
+opt.confirm = true
 
 -- Search Settings
 opt.ignorecase = true
@@ -27,7 +39,6 @@ opt.cursorline = true
 -- Appearance
 opt.termguicolors = true
 -- opt.background = "dark"
-opt.termguicolors = true
 -- vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
 -- vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
 opt.signcolumn = "yes"
@@ -49,10 +60,10 @@ opt.splitbelow = true
 -- Consider - as part of keyword
 opt.iskeyword:append("-")
 
--- Disable the mouse while in nvim
+-- Enable mouse support in all modes
 opt.mouse = "a"
 
 -- Folding
 opt.foldlevel = 20
 opt.foldmethod = "expr"
-opt.foldexpr = "nvim_treesitter#foldexpr()" -- Utilize Treesitter folds
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()" -- Utilize Treesitter folds
