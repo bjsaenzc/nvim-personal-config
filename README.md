@@ -1,42 +1,44 @@
 # Neovim IDE Configuration
 
-Personal Neovim configuration used as a full IDE, built incrementally over time. It runs inside **Ghostty** (terminal) + **tmux** (multiplexer), with **[lazy.nvim](https://github.com/folke/lazy.nvim)** as the plugin manager.
+Personal Neovim configuration used as a full IDE, built incrementally and then consolidated through a spec-driven cleanup (see [`DIAGNOSTIC.md`](./DIAGNOSTIC.md) and [`SDD_PLAN.md`](./SDD_PLAN.md)). It runs inside **Ghostty** (terminal) + **tmux** (multiplexer), with **[lazy.nvim](https://github.com/folke/lazy.nvim)** as the plugin manager.
 
 Work covered by this setup:
 
-- **Backend**: Python, Go, Rust (C and Java are used but have no dedicated LSP config yet — see [Language support](#language-support-summary))
-- **Frontend**: JavaScript, TypeScript, React (JSX/TSX), HTML/CSS
-- **Documentation**: Markdown (general purpose, with in-buffer rendering and browser preview) and LaTeX (formal/math-heavy documents via VimTeX + Skim)
-- **Extras**: REST client (Kulala), debugging (nvim-dap), Git tooling (fugitive, lazygit, diffview, gitgraph, gh.nvim), AI CLI integration (sidekick.nvim)
+- **Backend**: Python, C, Java, Go, Rust — each with LSP, formatting, and debugging
+- **Frontend**: JavaScript, TypeScript, React (JSX/TSX), HTML/CSS — including Chrome/Node debugging
+- **Documentation**: Markdown (rendered in-buffer, browser preview, markdownlint) and LaTeX (VimTeX + Skim, latexindent)
+- **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim)
 
-Leader key: **`<Space>`**.
+Leader key: **`<Space>`**. Local leader: **`,`** (used by VimTeX). Press `<Space>` and pause — **which-key** shows every group.
+
+Startup is fully lazy-loaded: ~58 ms with 13 of 63 plugins loaded at startup (measured; the rest load on demand).
 
 ---
 
 ## Requirements
 
-Derived from what the config actually uses:
-
 | Tool | Needed by |
 |---|---|
-| **Neovim ≥ 0.11** (currently run on 0.12-dev nightly) | `vim.lsp.config()` / `vim.lsp.enable()` API in `nvim-lspconfig.lua`, `vim.o.winborder` |
+| **Neovim ≥ 0.11** (currently run on 0.12-dev nightly) | `vim.lsp.config()` API, `vim.diagnostic.jump`, treesitter `main` branch, `vim.o.winborder` |
 | **git** | lazy.nvim bootstrap, all git plugins |
 | **A Nerd Font** (Ghostty is set to *JetBrainsMono Nerd Font Mono*) | nvim-web-devicons, diagnostic signs, gitgraph symbols, blink.cmp `nerd_font_variant = 'mono'` |
-| **make** + a C compiler | `telescope-fzf-native.nvim` (`build = 'make'`) |
-| **node / npm** | `markdown-preview.nvim` (`cd app && npm install`), `package-info.nvim` (`package_manager = 'npm'`), prettierd/prettier, most Mason servers (vtsls, eslint, quick_lint_js, emmet) |
-| **ripgrep** | Telescope `live_grep` |
-| **Mason-managed LSP servers** (auto-installed) | `lua_ls`, `pylsp`, `gopls`, `lemminx`, `marksman`, `quick_lint_js`, `vtsls`, `eslint`, `emmet_language_server` |
-| **Formatters** (external, used by conform.nvim) | `prettierd`/`prettier`, `stylua`, `ruff` |
-| **debugpy** (`pip install debugpy` in each venv) | Python debugging (`lua/config/dap/python.lua`) |
-| **dlv** (`go install github.com/go-delve/delve/cmd/dlv@latest`) | Go debugging (`lua/config/dap/go.lua`) |
+| **make + a C compiler** | `telescope-fzf-native.nvim`, treesitter parser compilation |
+| **node / npm** | markdown-preview.nvim (`cd app && npm install`), package-info.nvim, js-debug-adapter, most Mason servers |
+| **ripgrep** | Telescope `live_grep`, grug-far |
+| **Java 17+ runtime on PATH** | jdtls (Java LSP) — Mason installs jdtls itself, but not the JRE |
 | **rust-analyzer + cargo + clippy** | rustaceanvim (rust-analyzer is *not* Mason-managed here) |
 | **latexmk + a TeX distribution + Skim.app** | VimTeX (compile + forward search on macOS) |
-| **lazygit** | lazygit.nvim and Snacks lazygit |
-| **gh CLI** | gh.nvim and Snacks GitHub pickers |
-| **ImageMagick / luarocks (magick)** | image.nvim (lazy builds this via `hererocks`, present in the lockfile) |
-| **mermaid-cli (`mmdc`)** | diagram.nvim mermaid rendering (a save-hook variant is present but commented out) |
-| **tmux + vim-tmux-navigator tmux plugin** | Seamless `<C-h/j/k/l>` pane navigation |
+| **lazygit** | Snacks lazygit (`<leader>gG`) |
+| **gh CLI** | Snacks GitHub pickers |
+| **ImageMagick / luarocks (magick)** | image.nvim (lazy builds this via `hererocks`) |
+| **mermaid-cli (`mmdc`)** | diagram.nvim mermaid rendering |
+| **tmux (+ vim-tmux-navigator tmux plugin)** | Seamless `<C-h/j/k/l>` pane navigation, image passthrough |
 | **cursor-agent / claude CLI** (optional) | sidekick.nvim AI tools |
+
+**Everything else installs itself.** Two Mason mechanisms guarantee binaries on a fresh machine:
+
+- **LSP servers** (mason-lspconfig `ensure_installed`, auto-enabled): `lua_ls`, `basedpyright`, `ruff`, `clangd`, `gopls`, `lemminx`, `marksman`, `vtsls`, `eslint`, `emmet_language_server`
+- **Formatters / debuggers / linters** (mason-tool-installer; run `:MasonToolsInstallSync` to force): `stylua`, `prettierd`, `ruff`, `basedpyright`, `debugpy`, `delve`, `codelldb`, `clang-format`, `jdtls`, `js-debug-adapter`, `markdownlint`, `latexindent`
 
 ---
 
@@ -47,16 +49,17 @@ git clone <this-repo> ~/.config/nvim
 nvim
 ```
 
-`init.lua` bootstraps everything on first launch:
+`init.lua` bootstraps everything on first launch, in this order:
 
 1. Clones lazy.nvim (stable branch) into `stdpath("data")/lazy/lazy.nvim` if missing.
-2. Sets `mapleader = " "` (must happen before lazy loads).
-3. `require("lazy").setup("plugins", ...)` — **every file in `lua/plugins/` returning a spec is auto-loaded**. Change detection is on, notifications off.
-4. Loads `core.options` and `core.keymaps` (not managed by lazy).
+2. Sets `mapleader = " "` and `maplocalleader = ","` (must happen before lazy loads).
+3. Loads `core.options` **before** plugins, so startup-loaded plugins see final option values.
+4. `require("lazy").setup("plugins", ...)` — **every file in `lua/plugins/` returning a spec is auto-loaded**. Change detection on, notifications off.
+5. Loads `core.keymaps` and `core.autocmds` (not managed by lazy).
 
-To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete the file (the convention here is to rename it to `*.deprecated.txt` to keep it as reference — lazy ignores non-`.lua` files).
+To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete the file — git history is the archive.
 
-> **Note**: `lazy-lock.json` is listed in `.gitignore` and is *not* tracked by git, so plugin versions are not pinned by the repo — a fresh clone installs the latest commits of everything.
+> **`lazy-lock.json` is committed.** Installs are reproducible across machines. Update policy: `:Lazy update` → test → commit the lockfile.
 
 ---
 
@@ -64,28 +67,31 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 
 ```
 ~/.config/nvim
-├── init.lua                        # Bootstrap lazy.nvim, leader key, load core modules
-├── lazy-lock.json                  # Lockfile (local only — gitignored)
+├── init.lua                        # Bootstrap: leaders → options → lazy.nvim → keymaps/autocmds
+├── lazy-lock.json                  # Lockfile (tracked — pins every plugin commit)
+├── DIAGNOSTIC.md                   # Config audit (2026-08) that drove the cleanup
+├── SDD_PLAN.md                     # Spec-driven implementation plan + progress log
 ├── ftplugin/
-│   └── markdown.lua                # Markdown-only settings: wrap, spell (en_us + es), j/k on wrapped lines
+│   ├── markdown.lua                # Buffer-local: wrap, spell (en_us + es), j/k on wrapped lines
+│   └── java.lua                    # Starts/attaches jdtls with a per-project workspace
 ├── spell/
 │   ├── es.utf-8.spl                # Spanish spell dictionary
 │   └── es.utf-8.sug
 └── lua/
     ├── core/
-    │   ├── options.lua             # Editor options (numbers, tabs, clipboard, folds…)
-    │   └── keymaps.lua             # Global custom keymaps (buffers, splits, telescope, LSP, DAP…)
+    │   ├── options.lua             # Editor options (numbers, tabs, undo, folds…)
+    │   ├── keymaps.lua             # Global keymaps (buffers, splits, tabs, quickfix…)
+    │   └── autocmds.lua            # TermOpen keymaps + buffer-local LSP keymaps (LspAttach)
     ├── config/
     │   └── dap/
-    │       ├── init.lua            # DAP UI, virtual text, signs, listeners, keymaps, launch.json loader
-    │       ├── python.lua          # debugpy adapter + Flask / FastAPI / generic-file configs
-    │       └── go.lua              # Delve adapter + package/file/test/attach configs
+    │       ├── init.lua            # DAP UI, virtual text, signs, keymaps, launch.json loader
+    │       ├── python.lua          # debugpy: Flask / FastAPI / generic-file configs
+    │       ├── go.lua              # Delve: package/file/test/attach configs
+    │       ├── c.lua               # codelldb: launch executable / attach (C and C++)
+    │       └── js.lua              # vscode-js-debug: pwa-node + pwa-chrome configs
     ├── myPlugins/
-    │   └── floatterm/lua/floatterm.lua   # Hand-written local plugin: toggleable floating terminal
+    │   └── floatterm/lua/floatterm.lua   # Hand-written local plugin: floating terminal
     └── plugins/                    # One lazy.nvim spec per plugin (auto-loaded)
-        ├── *.lua                   # Active specs
-        └── *.deprecated.txt        # Retired specs kept for reference (nvim-dap-ui,
-                                    #   nvim-dap-virtual-text, markdown.nvim, markview.nvim)
 ```
 
 ---
@@ -94,199 +100,209 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 
 - Relative + absolute line numbers, cursorline, `signcolumn=yes`, `termguicolors`, `showmode` off.
 - 2-space indentation (`tabstop`/`shiftwidth`/`softtabstop` = 2, `expandtab`).
-- `ignorecase` + `smartcase` search.
+- `ignorecase` + `smartcase` search; `inccommand=split` live-previews `:substitute`.
+- **Persistent undo** (`undofile`) — undo history survives restarts.
+- `scrolloff=8` context lines; `confirm` prompts instead of failing on unsaved `:q`.
 - System clipboard integration (`clipboard+=unnamedplus`).
-- Splits open right/below; mouse enabled (`mouse=a`).
-- `-` counts as part of a word (`iskeyword+=-`).
-- **Folding via Treesitter**: `foldmethod=expr` with `nvim_treesitter#foldexpr()`, `foldlevel=20` (everything open by default).
-- Rounded borders on diagnostic floats; rich `sessionoptions` for session plugins.
+- Splits open right/below; mouse enabled (`mouse=a`); `-` counts as part of a word.
+- **Folding via Treesitter**: `foldmethod=expr` with `v:lua.vim.treesitter.foldexpr()`, `foldlevel=20` (open by default).
+- Rich `sessionoptions` — consumed by persistence.nvim.
 
 ---
 
 ## Plugin Catalog
 
-Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nui.nvim`, `nvim-nio`, `nvim-web-devicons`, `litee.nvim`, `lush`-less etc.) are listed with their consumer.
+Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nui.nvim`, `nvim-nio`, `nvim-web-devicons`) are listed with their consumer.
 
 ### UI / Appearance
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `nightfox.nvim` | **Active colorscheme: `carbonfox`**. Italic comments, terminal colors on, no transparency. `lua/plugins/colorscheme.lua` also keeps ~7 commented-out alternatives (kanagawa with a custom palette, tokyonight, catppuccin, sonokai, onenord, onedark, vscode, arctic) ready to swap in. |
-| `lualine.nvim` | Statusline, theme `codedark`; filename shown as `parent/filename` (`path = 4`) with `[+]`/`[-]` status. Deps: `nvim-web-devicons`, `lsp-progress.nvim` (LSP loading progress). |
-| `barbecue` (+ `nvim-navic`) | Winbar breadcrumbs fed by LSP (default options). |
-| `indent-blankline.nvim` | Indent guides using `\|` char. |
-| `nvim-colorizer.lua` (NvChad fork) | Inline color highlighting for hex/rgb()/hsl()/Tailwind/Sass, background mode, all filetypes. |
-| `snacks.nvim` | Multi-tool: dashboard, indent scope, input, picker, notifier, quickfile, scroll, statuscolumn, word highlights, **gh** and **lazygit** modules enabled. Keys: `<leader>ghi/ghI` GitHub issues (open/all), `<leader>ghp/ghP` PRs (open/all), `<leader>Gf` git files picker, `<leader>git` lazygit, `<leader>Gs` git status. |
-| `fidget.nvim` | LSP progress spinner (dependency of lspconfig, default opts). |
+| `nightfox.nvim` | **Active colorscheme: `carbonfox`**. Italic comments, terminal colors on, no transparency. `colorscheme.lua` keeps commented-out alternatives (kanagawa custom palette, tokyonight, catppuccin, …) ready to swap in. |
+| `lualine.nvim` | Statusline, `theme = "auto"` (follows the colorscheme); filename shown as `parent/filename` (`path = 4`). `VeryLazy`. |
+| `dropbar.nvim` | Winbar breadcrumbs (native winbar + LSP/treesitter sources). Replaced the unmaintained barbecue. |
+| `nvim-colorizer.lua` (NvChad fork) | Inline color highlighting for hex/rgb()/hsl()/Tailwind/Sass. |
+| `snacks.nvim` | Multi-tool: dashboard, **indent guides** (sole provider), input, notifier, quickfile, scroll, statuscolumn, word highlights, **gh** and **lazygit**. `picker` module is **disabled** — telescope is the picker — but the explicit gh keys below still work. Keys: `<leader>ghi/ghI` issues (open/all), `<leader>ghp/ghP` PRs (open/all), `<leader>Gf` git files, `<leader>gG` lazygit, `<leader>Gs` git status. |
+| `which-key.nvim` | Keymap discoverability: press `<leader>` and pause for named groups; `<leader>?` shows buffer-local maps. Every mapping carries a `desc`. |
+| `fidget.nvim` | LSP progress spinner (dependency of lspconfig). |
 
 ### Navigation / Editing
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `telescope.nvim` (+ `plenary.nvim`, `telescope-fzf-native.nvim`) | Fuzzy finder; fzf native sorter built with `make`; `filename_first` path display. All keymaps under `<leader>f…` (see keymap tables). |
-| `harpoon` (master branch, v1 API) | Per-project file marks. `<leader>ha` add, `<leader>hh` menu (width 120), `<leader>h1`–`h9` jump. |
-| `nvim-tree.lua` | File explorer (netrw disabled, window-picker off). `<leader>ee` toggle / `<leader>er` focus / `<leader>ef` find file — each also resizes to width 60. |
-| `nvim-treesitter` (+ `nvim-treesitter-textobjects`) | Highlighting/indent/folds. `ensure_installed`: python, javascript, typescript, tsx, jsx, go, html, css, json, lua, vim, markdown, vimdoc, query (+ rust, toml, ron added by the rustaceanvim spec). `auto_install = true`. |
-| `vim-commentary` | `gc`/`gcc` comment toggling (stock behavior). |
-| `nvim-autopairs` | Auto-close pairs, treesitter-aware (no pairs inside lua strings / JS-TS template strings), `<M-e>` fast-wrap. |
-| `nvim-ts-autotag` | Auto close/rename HTML/JSX/XML tags (close-on-slash off). |
-| `demicolon.nvim` | Makes `t/f/]x/[x` motions repeatable with `;`/`,`. |
-| `refjump.nvim` | Jump between LSP references of the symbol under cursor: `<leader>}` next, `<leader>{` prev, with highlights; demicolon integration makes `]r`/`[r` repeatable. Loaded on `LspAttach`. |
+| `telescope.nvim` (+ `plenary.nvim`, `telescope-fzf-native.nvim`) | Fuzzy finder; fzf native sorter; `filename_first` path display. Lazy-loads via its own `keys` table (`<leader>f…`) and `:Telescope`. |
+| `harpoon` (**harpoon2** branch, v2 API) | Per-project file marks. `<leader>ha` add, `<leader>hh` menu, `<leader>h1`–`h9` jump. Lazy-loads on its keys. |
+| `nvim-tree.lua` | File explorer (netrw disabled). `<leader>ee` toggle / `<leader>er` focus / `<leader>ef` find file — each resizes to width 60. Lazy on `cmd`. |
+| `nvim-treesitter` (**main branch**) | Highlighting + indent, rewritten API: parsers installed via `install()` (22 languages incl. `c`, `java`, `rust`, `markdown_inline`), enabled per-buffer by a `FileType` autocmd (`vim.treesitter.start()` + treesitter `indentexpr`). **No `auto_install`** — new languages go in the spec's `ensure_installed` list or `:TSInstall <lang>`. |
+| `nvim-treesitter-textobjects` (**main branch**) | Provides `repeatable_move` for demicolon. |
+| `grug-far.nvim` | Project-wide search & replace with live ripgrep preview. `<leader>fR` (normal/visual), `:GrugFar`. |
+| `persistence.nvim` | Per-project sessions. `<leader>qs` restore cwd session, `<leader>qS` restore last, `<leader>qd` don't-save-on-exit. |
+| `vim-commentary` | `gc`/`gcc` comment toggling. `VeryLazy`. |
+| `nvim-autopairs` | Auto-close pairs, treesitter-aware, `<M-e>` fast-wrap. |
+| `nvim-ts-autotag` | Auto close/rename HTML/JSX/XML tags (standalone, works with treesitter main). |
+| `demicolon.nvim` | Makes `t/f/]x/[x` motions repeatable with `;`/`,`. `VeryLazy` (a `keys` trigger would break operator-pending `t`/`f`). |
+| `refjump.nvim` | `<leader>}` / `<leader>{` jump between LSP references; `]r`/`[r` repeatable via demicolon. Loads on `LspAttach`. |
 | `vim-tmux-navigator` | `<C-h/j/k/l>` and `<C-\>` navigate seamlessly across nvim splits **and** tmux panes. |
-| **floatterm** (local, `lua/myPlugins/floatterm/`) | Hand-written floating terminal. `:FloatTerm` or `<leader>te` (normal + terminal mode) toggles a 90%×90% centered float; the shell session persists across toggles. |
+| **floatterm** (local, `lua/myPlugins/floatterm/`) | Hand-written floating terminal: `:FloatTerm` / `<leader>te` toggles a 90%×90% float; shell session persists across toggles. |
 
 ### LSP / Completion / Formatting / Diagnostics
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `nvim-lspconfig` | Uses the native `vim.lsp.config()` API. Global capabilities come from **blink.cmp**; `vim.o.winborder = 'rounded'`. Per-server settings for `lua_ls` (lazydev + `vim` global), `pylsp` (flake8 + pylint + mypy enabled, pyflakes/pycodestyle/mccabe/yapf disabled, and a `before_init` that picks up per-project configs from a `.code_quality/` directory: `.flake8`, `.pylintrc`, `mypy.ini`), `gopls` (staticcheck, gofumpt, unusedparams), `vtsls` (inlay hints, `updateImportsOnFileMove`), `eslint` (auto working directories), `emmet_language_server` (html/css/scss/sass/less/jsx/tsx). Two `BufWritePre` autocmds: **Go** organize-imports+format via gopls, **JS/TS** `source.fixAll.eslint`. Custom diagnostic signs (nerd-font glyphs), virtual text, severity sort. |
-| `mason.nvim` + `mason-lspconfig.nvim` | Server installer; `ensure_installed` (with automatic enable): `lua_ls`, `pylsp`, `gopls`, `lemminx` (XML), `marksman` (Markdown), `quick_lint_js`, `vtsls`, `eslint`, `emmet_language_server`. |
-| `lazydev.nvim` | Lua LSP awareness of the Neovim API (`vim.uv` typings) while editing this config. |
-| `blink.cmp` | **Primary completion engine** (its capabilities are the ones passed to LSP). Preset `default` keymap: `<C-y>` accept, `<C-n>/<C-p>` select, `<C-space>` open menu/docs, `<C-e>` hide, `<C-k>` signature toggle. Signature help enabled; sources: lsp, path, snippets, buffer; friendly-snippets dependency. |
-| `nvim-cmp` (+ `cmp-nvim-lsp`, `cmp-buffer`, `cmp-path`, `cmp-cmdline`, `cmp_luasnip`, `LuaSnip`, `friendly-snippets`) | **Also installed and fully configured** (`<C-j>/<C-k>` select, `<CR>` confirm, `<Tab>/<S-Tab>` cycle or jump snippet placeholders, bordered windows). See [Gotchas](#nuances--gotchas) — two completion engines coexist. |
-| `conform.nvim` | Formatting. `<leader>jf` format buffer. Format-on-save (1s timeout, LSP fallback) **except Go** (gopls autocmd owns it). Formatters: `prettierd`→`prettier` for js/ts/jsx/tsx/json/jsonc/css/scss/html/markdown/yaml, `stylua` for Lua, `ruff_organize_imports` + `ruff_format` for Python. |
-| `trouble.nvim` | Pretty diagnostics/lists. `<leader>xx` diagnostics, `<leader>xX` buffer diagnostics, `<leader>cs` symbols, `<leader>cl` LSP panel, `<leader>xL` loclist, `<leader>xQ` quickfix. |
+| `nvim-lspconfig` | Native `vim.lsp.config()` API; capabilities from **blink.cmp**; `vim.o.winborder = 'rounded'`. Per-server settings: `lua_ls` (lazydev), `basedpyright` (typeCheckingMode `standard`), `ruff` (lint + code actions), `clangd` (root markers incl. `compile_commands.json`), `gopls` (staticcheck, gofumpt), `vtsls` (inlay hints), `eslint` (fix-all on save autocmd), `emmet_language_server`. Custom diagnostic signs, severity sort. |
+| `mason.nvim` + `mason-lspconfig.nvim` | LSP server installer with `automatic_enable` (list above). |
+| `mason-tool-installer.nvim` | Guarantees non-LSP binaries exist (formatters, DAP adapters, jdtls — list above). `:MasonToolsInstallSync`. |
+| `lazydev.nvim` | Lua LSP awareness of the Neovim API while editing this config. |
+| `blink.cmp` | **The** completion engine (nvim-cmp was removed). Preset `default`: `<C-y>` accept, `<C-n>/<C-p>` select, `<C-space>` menu/docs, `<C-e>` hide, `<C-k>` signature toggle. Signature help on; **cmdline completion enabled**; sources: lsp, path, snippets (friendly-snippets), buffer. |
+| `conform.nvim` | Formatting. `<leader>jf` format buffer; format-on-save (1 s, LSP fallback) **except Go**. Formatters: `prettierd`→`prettier` (js/ts/jsx/tsx/json/css/html/yaml), `prettierd`+`markdownlint` (markdown), `stylua` (lua), `ruff_organize_imports`+`ruff_format` (python), `clang_format` (c/cpp), `latexindent` (tex). |
+| `trouble.nvim` | Pretty diagnostics/lists, lazy on `cmd`/`keys`: `<leader>xx` diagnostics, `<leader>xX` buffer, `<leader>cs` symbols, `<leader>cl` LSP panel, `<leader>xL` loclist, `<leader>xQ` quickfix. |
+| `nvim-jdtls` | Java LSP layer; started per-project by `ftplugin/java.lua` with an isolated workspace per project root (hash-suffixed). |
+
+**LSP keymaps are buffer-local**, defined in an `LspAttach` autocmd (`lua/core/autocmds.lua`) — they only exist where a server is attached. Neovim 0.11 builtins (`grr`, `grn`, `gra`, `gri`, `K`) coexist with the custom `<leader>g*` set.
 
 ### Debugging (DAP)
 
-Specs in `lua/plugins/nvim-dap.lua` are declaration-only; all logic lives in `lua/config/dap/`.
+Specs in `lua/plugins/nvim-dap.lua` are declaration-only; all logic lives in `lua/config/dap/`. The whole stack lazy-loads on the first debug keymap.
 
-| Plugin | Purpose / configuration here |
+| Plugin | Purpose |
 |---|---|
-| `nvim-dap` | Core debug adapter client, lazy-loaded on its keymaps. |
-| `nvim-dap-ui` (+ `nvim-nio`) | Left sidebar (scopes/breakpoints/stacks/watches) + bottom tray (repl/console). Auto-opens on session start, auto-closes on exit. |
-| `nvim-dap-virtual-text` | Inline variable values at end-of-line while stepping, changed-variable highlighting, stop reasons. |
-| `telescope-dap.nvim` | Telescope pickers for frames/commands/breakpoints (`<leader>df`, `<leader>dh`, `<leader>ba`). |
+| `nvim-dap` | Core debug adapter client. |
+| `nvim-dap-ui` (+ `nvim-nio`) | Sidebar (scopes/breakpoints/stacks/watches) + tray (repl/console); auto-opens/closes with the session. |
+| `nvim-dap-virtual-text` | Inline variable values while stepping. |
+| `telescope-dap.nvim` | Pickers via `:Telescope dap …` (frames, commands, breakpoints — no default maps). |
 
-Adapters/configs: **Python** (debugpy; Flask `app.py`, FastAPI/uvicorn `main:app`, generic current-file with `$VIRTUAL_ENV` detection) and **Go** (Delve server mode; debug package/file, package tests, single test function by regex, attach-to-process picker). A loader also merges **`.vscode/launch.json`** from the project root into the DAP configs (re-run on `:cd` via a `DirChanged` autocmd), mapping VS Code types `python`/`debugpy`/`go`.
+Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, venv-aware) · **Go** (Delve; package/file/tests/attach) · **C/C++** (codelldb; launch executable, attach) · **JS/TS/React** (vscode-js-debug; launch node file, attach to `--inspect`, launch Chrome against localhost) · **Rust** (rustaceanvim auto-discovers the same Mason codelldb).
+
+**`.vscode/launch.json` is honored**: merged at startup and on every `:cd`; recognized types: `python`/`debugpy`, `go`, `lldb`/`codelldb`, `node`/`pwa-node`, `chrome`/`pwa-chrome`.
 
 ### Git / GitHub
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `vim-fugitive` | Classic `:Git` interface (lazy-loaded on the `Git` command). |
-| `lazygit.nvim` | Full lazygit TUI in a float: `<leader>lg` / `:LazyGit` (Snacks also exposes lazygit at `<leader>git`). |
-| `diffview.nvim` | Diff/merge UI; `<leader>dv` smart-toggles open/close. |
-| `gitgraph.nvim` | Commit graph ("metro map" symbols, custom highlight colors). `<leader>gL` draws branches+remotes+tags (max 5000; deliberately not `--all` to avoid stash/worktree refs). Selecting a commit or range opens it in Diffview. |
-| `git-blame.nvim` | Inline blame, **disabled by default**; `<leader>gb` toggles (`:GitBlameToggle`). |
-| `gh.nvim` (+ `litee.nvim`) | GitHub PR review inside Neovim; `<leader>GH` opens the `:GH` menu. |
+| `gitsigns.nvim` | Hunk signs in the gutter, staging, preview, blame. `]h`/`[h` hunk motions; `<leader>H*` hunk actions (buffer-local); `<leader>gb` toggles current-line blame. |
+| `vim-fugitive` | Classic `:Git` interface. |
+| `diffview.nvim` | Diff/merge UI; `<leader>dv` smart-toggles. |
+| `gitgraph.nvim` | Commit graph, highlights **linked to standard groups** (follows any colorscheme). `<leader>gL` draws branches+remotes+tags (deliberately not `--all` — keeps stash/worktree refs out). Commit/range selection opens Diffview. |
+| snacks gh/lazygit | GitHub issue/PR pickers (`<leader>gh*`) and lazygit (`<leader>gG`) — see UI table. |
 
 ### Language-specific
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `vimtex` | LaTeX: `latexmk` compiler, **Skim** viewer with SyncTeX forward search + focus, quickfix suppressed on warnings, noisy warnings (Under/Overfull, hyperref token) filtered. Not lazy-loaded (filetype detection). |
-| `telescope-bibtex.nvim` | `<leader>sb` — fuzzy-search BibTeX entries and insert citations. |
-| `rustaceanvim` (v5) | Rust IDE layer (do **not** configure rust-analyzer via lspconfig). Buffer-local keys: `<leader>ca` code action, `<leader>dr` debuggables, `<leader>rr` runnables, `K` hover actions. Format-on-save via rust-analyzer only; clippy on save, all cargo features, proc-macros enabled. |
-| `crates.nvim` | Crate version info/completion inside `Cargo.toml` (loads on `BufRead Cargo.toml`). |
-| `render-markdown.nvim` | In-buffer pretty Markdown rendering (heading icons + signs, full-width code-block background). |
-| `markdown-preview.nvim` | Live browser preview: `:MarkdownPreviewToggle` / `:MarkdownPreview` / `:MarkdownPreviewStop` (built with `npm install`). |
-| `render-latex.nvim` | Renders LaTeX math snippets **inside Markdown** buffers (`ft = "markdown"`). |
-| `image.nvim` | Inline image rendering, **kitty graphics protocol backend** (works in Ghostty; requires tmux `allow-passthrough on`, which is set). Markdown integration enabled, max 100×40 cells. |
-| `diagram.nvim` | Renders mermaid diagrams in Markdown via image.nvim (transparent background, default theme). A commented-out autocmd for `mmdc`-on-save lives in `nvim-image.lua`. |
-| `json-nvim` | JSON utilities: `<leader>jff` format file, `<leader>jmf` minify file. |
-| `package-info.nvim` (+ `nui.nvim`) | Inline dependency versions in `package.json` (npm). `<leader>ns` show, `<leader>nu` update, `<leader>nd` delete, `<leader>ni` install, `<leader>nc` change version. |
-| `kulala.nvim` | REST client for `.http`/`.rest` files. Default mappings disabled; custom `<leader>R…` maps (see keymaps). UI floats get line numbers via a `WinEnter` autocmd; request/response size limits raised. |
+| `vimtex` | LaTeX: `latexmk` compiler, **Skim** viewer with SyncTeX, noisy warnings filtered. Its `\l…`-style maps live under localleader (`,`). |
+| `telescope-bibtex.nvim` | `<leader>sb` — fuzzy-search BibTeX entries, insert citations. |
+| `rustaceanvim` (**v6**) | Rust IDE layer (rust-analyzer is *not* configured via lspconfig). Buffer-local keys: `<leader>ca` code action, `<leader>dr` debuggables, `<leader>rx` runnables, `K` hover actions. Format-on-save via rust-analyzer; clippy on save (modern `check` config shape); DAP via auto-discovered Mason codelldb. |
+| `crates.nvim` | Crate versions inside `Cargo.toml`. |
+| `neotest` (+ `neotest-python`, `neotest-jest`, `neotest-golang`) | Test runner: `<leader>nt` nearest, `<leader>nf` file, `<leader>nd` debug nearest (DAP), `<leader>ns` summary, `<leader>no` output, `<leader>nO` panel, `<leader>nl` re-run last. |
+| `render-markdown.nvim` | In-buffer Markdown rendering (`ft = markdown`). |
+| `markdown-preview.nvim` | Live browser preview: `:MarkdownPreviewToggle`. |
+| `render-latex.nvim` | Renders LaTeX math inside Markdown buffers. |
+| `image.nvim` | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. |
+| `diagram.nvim` | Mermaid diagrams in Markdown via image.nvim. |
+| `package-info.nvim` (+ `nui.nvim`) | Inline dependency versions in `package.json`. `<leader>Ns` show, `<leader>Nu` update, `<leader>Nd` delete, `<leader>Ni` install, `<leader>Nc` change version. |
+| `kulala.nvim` | REST client for `.http`/`.rest` files. Default maps disabled; custom `<leader>R…` set. |
 
 ### AI
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `sidekick.nvim` | Drives AI CLIs (Claude, cursor-agent, …) in a split. `<C-.>` toggle from any mode, `<leader>aa` toggle, `<leader>ac` open **Claude** directly, `<leader>as` select installed tool, `<leader>ad` detach, `<leader>at` send `{this}`, `<leader>af` send `{file}`, `<leader>av` send visual selection, `<leader>ap` prompt picker. Custom prompt library: `python_tests`, `module_docstring`, `update_changelog`, and `pr_documentation` (generates PR docs in Latin-American Spanish vs the `develop` branch). |
+| `sidekick.nvim` | Drives AI CLIs (Claude, cursor-agent, …). `<C-.>` toggle from any mode, `<leader>aa` toggle, `<leader>ac` open **Claude**, `<leader>as` select tool, `<leader>ad` detach, `<leader>at/af/av` send this/file/selection, `<leader>ap` prompt picker. Custom prompts: `python_tests`, `module_docstring`, `update_changelog`, `pr_documentation` (Latin-American Spanish PR docs vs `develop`). |
 
 ---
 
 ## Keymaps Reference
 
-Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/config/dap/init.lua`, and per-plugin `keys` tables.
+Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/core/autocmds.lua` (LSP), `lua/config/dap/init.lua`, and per-plugin `keys` tables. All maps have `desc` — `<leader>` + pause shows them via which-key.
 
 ### General / Buffers / Windows / Tabs
 
 | Key | Action |
 |---|---|
 | `<leader>ww` / `<leader>wq` / `<leader>qq` | Save / save-and-quit / quit without saving |
-| `Gx` | Open URL under cursor (`:!open`) |
+| `gx` | Open URL under cursor (builtin `vim.ui.open`) |
 | `<leader>bn` / `<leader>bp` | Next / previous buffer |
 | `<leader>bd` / `<leader>bD` | Close buffer (safe / force) |
-| `<leader>bo` | Close all buffers but current |
-| `<leader>bx` | Close all but current, keeping splits (`%bd\|e#\|bd#`) |
-| `<leader>bt` | Move current buffer to a new tab (`<C-w>T`) |
-| `<leader>sv` / `<leader>sh` | Vertical / horizontal split |
-| `<leader>se` / `<leader>sx` | Equalize / close split |
+| `<leader>ba` / `<leader>bA` | Close all buffers (safe / force) |
+| `<leader>bo` / `<leader>bx` | Close all but current (without / with keeping splits) |
+| `<leader>bt` | Move current buffer to a new tab |
+| `<leader>sv` / `<leader>sh` / `<leader>se` / `<leader>sx` | Split: vertical / horizontal / equalize / close |
 | `<leader>sj` / `<leader>sk` / `<leader>sl` / `<leader>sH` | Resize split (shorter/taller/wider/narrower) |
 | `<leader>to` / `<leader>tx` / `<leader>tn` / `<leader>tp` | Tab: open / close / next / prev |
 | `<leader>ts` | Move current tab into another tab as a vsplit (interactive) |
-| `<C-h/j/k/l>`, `<C-\>` | Navigate nvim splits ⇄ tmux panes (vim-tmux-navigator) |
-| `<Esc>` (terminal mode) | Back to normal mode (per-terminal autocmd; `<C-h/j/k/l>` also work from terminals) |
-| `<leader>te` | Toggle floating terminal (floatterm) |
+| `<C-h/j/k/l>`, `<C-\>` | Navigate nvim splits ⇄ tmux panes |
+| `<Esc>` (terminal mode) | Back to normal mode (TermOpen autocmd; `<C-h/j/k/l>` work from terminals too) |
+| `<leader>te` | Toggle floating terminal |
 | `<leader>qo/qf/qn/qp/ql/qc` | Quickfix: open / first / next / prev / last / close |
-| `<leader>cc` / `<leader>cj` / `<leader>ck` / `<leader>cn` / `<leader>cp` | Diff: put / get local / get remote / next / prev hunk |
+| `<leader>qs` / `<leader>qS` / `<leader>qd` | Session: restore cwd / restore last / don't save on exit |
+| `<leader>cc` / `<leader>cj` / `<leader>ck` / `<leader>cn` / `<leader>cp` | Diff mode: put / get local / get remote / next / prev hunk |
+| `<leader>?` | which-key: buffer-local maps |
 
-### Telescope / Files
+### Find / Files
 
 | Key | Action |
 |---|---|
-| `<leader>ff` | Find files |
-| `<leader>fg` | Live grep project |
-| `<leader>fa` | Live grep in current buffer's directory |
-| `<leader>fs` | Fuzzy find in current buffer |
-| `<leader>fb` | Open buffers |
-| `<leader>fr` | Recent files (oldfiles) |
-| `<leader>fh` | Help tags |
-| `<leader>fo` | LSP document symbols |
-| `<leader>fi` | LSP incoming calls |
-| `<leader>fm` | Treesitter functions/methods |
+| `<leader>ff` / `<leader>fg` / `<leader>fb` / `<leader>fh` | Files / live grep / buffers / help tags |
+| `<leader>fs` / `<leader>fa` | Fuzzy find in buffer / grep in buffer's directory |
+| `<leader>fr` / `<leader>fo` / `<leader>fi` / `<leader>fm` | Recent files / LSP symbols / incoming calls / treesitter functions |
 | `<leader>ft` | Live grep inside the nvim-tree node under cursor |
-| `<leader>ee` / `<leader>er` / `<leader>ef` | nvim-tree: toggle / focus / reveal current file (resized to 60) |
+| `<leader>fR` (n, v) | **Find & replace in project** (grug-far) |
+| `<leader>de` | Telescope error diagnostics |
+| `<leader>ee` / `<leader>er` / `<leader>ef` | nvim-tree: toggle / focus / reveal current file |
 | `<leader>ha`, `<leader>hh`, `<leader>h1..h9` | Harpoon: add, menu, jump to mark *n* |
 | `<leader>sb` | Telescope BibTeX citation search |
 
-### LSP / Diagnostics
+### LSP / Diagnostics (buffer-local, only where a server is attached)
 
 | Key | Action |
 |---|---|
 | `<leader>gg` | Hover |
-| `<leader>gd` / `<leader>Gd` / `<leader>Gh` / `<leader>Tg` | Go to definition (same window / vsplit / hsplit / new tab) |
+| `<leader>gd` / `<leader>Gd` / `<leader>Gh` / `<leader>Tg` | Definition (same window / vsplit / hsplit / new tab) |
 | `<leader>gD` / `<leader>gi` / `<leader>gt` / `<leader>gr` | Declaration / implementation / type definition / references |
 | `<leader>gs` | Signature help |
-| `<leader>rr` | Rename (in Rust buffers this is overridden to `RustLsp runnables`) |
+| `<leader>rr` | Rename (works in Rust buffers too — runnables moved to `<leader>rx`) |
 | `<leader>gf` (n, v) | LSP format (async) |
 | `<leader>jf` | Format via conform.nvim |
 | `<leader>ga` | Code action |
-| `<leader>gl` / `<leader>gp` / `<leader>gn` | Diagnostic float / prev / next |
+| `<leader>gl` / `<leader>gp` / `<leader>gn` | Diagnostic float / prev / next (`vim.diagnostic.jump`) |
 | `<leader>tr` | Document symbols |
-| `<leader>}` / `<leader>{` | Next / previous LSP reference (refjump) |
+| `<leader>}` / `<leader>{` | Next / previous LSP reference (refjump; `]r`/`[r` repeatable) |
+| `grr`, `grn`, `gra`, `gri`, `K` | Neovim 0.11 builtins — also available |
 | `<leader>xx`, `<leader>xX`, `<leader>cs`, `<leader>cl`, `<leader>xL`, `<leader>xQ` | Trouble panels |
-| Completion (blink.cmp) | `<C-space>` menu/docs, `<C-n>/<C-p>` select, `<C-y>` accept, `<C-e>` hide, `<C-k>` signature |
-| Completion (nvim-cmp, if active) | `<C-j>/<C-k>` select, `<Tab>/<S-Tab>` cycle/snippet-jump, `<CR>` confirm |
+| Completion (blink.cmp) | `<C-space>` menu/docs, `<C-n>/<C-p>` select, `<C-y>` accept, `<C-e>` hide, `<C-k>` signature; also on `:` cmdline |
 
-### Debugging (DAP)
-
-Defined in `lua/config/dap/init.lua` (plus older duplicates in `core/keymaps.lua` — see gotchas).
+### Debugging (DAP) — defined in `lua/config/dap/init.lua`
 
 | Key | Action |
 |---|---|
 | `<F5>` / `<F10>` / `<F11>` / `<F12>` | Continue-start / step over / step into / step out |
 | `<leader>b` / `<leader>B` | Toggle breakpoint / conditional breakpoint |
 | `<leader>bl` / `<leader>br` | Log point / clear all breakpoints |
-| `<leader>dr` / `<leader>dl` / `<leader>dt` / `<leader>dp` | REPL / re-run last / terminate / pause |
+| `<leader>dr` / `<leader>dl` / `<leader>dt` / `<leader>dp` | REPL / re-run last / terminate / pause (in Rust buffers `<leader>dr` = debuggables) |
 | `<leader>du` | Toggle DAP UI panels |
-| `<leader>de` (n, v) | Eval under cursor / eval selection |
-| `<leader>df` / `<leader>dh` / `<leader>ba` | Telescope: frames / DAP commands / breakpoints |
-| Legacy set (core/keymaps.lua) | `<leader>bb` toggle bp, `<leader>bc` conditional, `<leader>dc` continue, `<leader>dj/dk/do` step, `<leader>dd` disconnect+close UI |
+| `<leader>dE` (n, v) | Eval under cursor / eval selection (capital E — `<leader>de` is Telescope diagnostics) |
+| `:Telescope dap frames/commands/list_breakpoints` | DAP pickers (no default maps) |
+
+### Tests (neotest)
+
+| Key | Action |
+|---|---|
+| `<leader>nt` / `<leader>nf` / `<leader>nl` | Run nearest / file / re-run last |
+| `<leader>nd` | Debug nearest test (DAP) |
+| `<leader>ns` / `<leader>no` / `<leader>nO` | Toggle summary / show output / toggle output panel |
 
 ### Git / GitHub
 
 | Key | Action |
 |---|---|
-| `<leader>lg` | LazyGit |
-| `<leader>git` | Snacks lazygit |
-| `<leader>gb` | Toggle inline git blame |
+| `]h` / `[h` | Next / previous git hunk (gitsigns, buffer-local) |
+| `<leader>Hs` (n, v) / `<leader>Hr` (n, v) | Stage / reset hunk (or selection) |
+| `<leader>HS` / `<leader>Hp` / `<leader>Hb` / `<leader>Hd` | Stage buffer / preview hunk / blame line / diff vs index |
+| `<leader>gb` | Toggle current-line blame (gitsigns) |
+| `<leader>gG` | Lazygit (snacks) |
 | `<leader>dv` | Toggle Diffview |
-| `<leader>gL` | Draw git graph (gitgraph.nvim) |
+| `<leader>gL` | Draw git graph |
 | `<leader>Gf` / `<leader>Gs` | Snacks git files / git status |
 | `<leader>ghi/ghI/ghp/ghP` | Snacks GitHub issues / PRs (open / all) |
-| `<leader>GH` | gh.nvim menu |
 | `:Git …` | Fugitive |
 
 ### REST client (Kulala, in `.http` / `.rest` files)
@@ -294,11 +310,9 @@ Defined in `lua/config/dap/init.lua` (plus older duplicates in `core/keymaps.lua
 | Key | Action |
 |---|---|
 | `<leader>Rs` / `<leader>Ra` | Send current request / all requests |
-| `<leader>Re` | Select environment |
-| `<leader>Rt` | Toggle headers/body view |
+| `<leader>Re` / `<leader>Rt` | Select environment / toggle headers-body view |
 | `<leader>Rp` / `<leader>Rn` | Jump to prev / next request |
-| `<leader>Rc` | Copy request as cURL |
-| `<leader>Rb` / `<leader>Rq` | Scratchpad / close window |
+| `<leader>Rc` / `<leader>Rb` / `<leader>Rq` | Copy as cURL / scratchpad / close |
 
 ### AI (sidekick.nvim)
 
@@ -314,19 +328,21 @@ Defined in `lua/config/dap/init.lua` (plus older duplicates in `core/keymaps.lua
 
 ## Language Support Summary
 
-| Language | LSP | Formatting | Linting | Debugging |
-|---|---|---|---|---|
-| **Python** | `pylsp` (flake8, pylint, mypy plugins; per-project overrides read from `.code_quality/`) | `ruff_organize_imports` + `ruff_format` on save (conform) | via pylsp plugins | debugpy: Flask, FastAPI/uvicorn, current file (venv-aware) |
-| **Go** | `gopls` (staticcheck, gofumpt) | gopls organize-imports + format on save (autocmd; conform skips Go) | staticcheck | Delve: package / file / tests / attach |
-| **Rust** | rust-analyzer via **rustaceanvim** (clippy on save, all features) | rust-analyzer on save | clippy | rustaceanvim `debuggables` (`<leader>dr` in Rust buffers) |
-| **JS / TS / React** | `vtsls` (inlay hints) + `eslint` (fix-all on save) + `quick_lint_js` + `emmet_language_server` | prettierd/prettier on save | eslint | — |
-| **HTML/CSS** | emmet | prettierd/prettier | — | — |
-| **Lua** | `lua_ls` + lazydev | `stylua` | lua_ls diagnostics | — |
-| **Markdown** | `marksman` | prettier(d) | — | ftplugin: wrap + `en_us`/`es` spell; render-markdown, browser preview, inline LaTeX math, images, mermaid |
-| **LaTeX** | — (VimTeX, not LSP) | latexmk continuous compile | VimTeX quickfix (warnings filtered) | Skim forward/inverse search |
-| **XML** | `lemminx` | — | — | — |
-| **JSON** | (vtsls-adjacent tooling) | prettier(d); `<leader>jff`/`<leader>jmf` via json-nvim | — | — |
-| **C / Java** | **not configured** (no clangd/jdtls) — treesitter highlighting at most | — | — | — |
+| Language | LSP | Formatting | Linting | Debugging | Tests |
+|---|---|---|---|---|---|
+| **Python** | `basedpyright` (types) + `ruff` (lint, code actions) | ruff organize-imports + format on save | ruff | debugpy: Flask, FastAPI, current file (venv-aware) | neotest-python (pytest) |
+| **C / C++** | `clangd` | `clang-format` on save | clangd diagnostics | codelldb: launch / attach | — |
+| **Java** | `jdtls` (per-project workspaces via `ftplugin/java.lua`) | jdtls | jdtls diagnostics | — | — |
+| **Go** | `gopls` (staticcheck, gofumpt) | gopls organize-imports + format on save | staticcheck | Delve: package / file / tests / attach | neotest-golang |
+| **Rust** | rust-analyzer via **rustaceanvim v6** | rust-analyzer on save | clippy on save | codelldb (auto-discovered): `<leader>dr` debuggables | — |
+| **JS / TS / React** | `vtsls` (inlay hints) + `eslint` (fix-all on save) + emmet | prettierd/prettier on save | eslint | vscode-js-debug: node file / attach / Chrome | neotest-jest |
+| **Lua** | `lua_ls` + lazydev | `stylua` | lua_ls | — | — |
+| **Markdown** | `marksman` | prettierd, then markdownlint `--fix` on save | markdownlint | — | — |
+| **LaTeX** | — (VimTeX workflow) | `latexindent` via conform; latexmk continuous compile | VimTeX quickfix (filtered) | — | — |
+| **XML** | `lemminx` | — | — | — | — |
+| **JSON** | (via vtsls tooling) | prettierd/prettier | — | — | — |
+
+All treesitter parsers (22 languages) are declared in `lua/plugins/nvim-treesitter.lua` and installed automatically.
 
 ---
 
@@ -334,7 +350,7 @@ Defined in `lua/config/dap/init.lua` (plus older duplicates in `core/keymaps.lua
 
 Everything runs in **Ghostty → tmux → Neovim**.
 
-**`~/.tmux.conf`** (found and read):
+**`~/.tmux.conf`**:
 
 ```tmux
 set -g mouse on
@@ -343,8 +359,8 @@ set -g @plugin 'christoomey/vim-tmux-navigator'
 ```
 
 - `mouse on` — mouse scrolling/pane resize in tmux.
-- `allow-passthrough on` — **required** for image.nvim's kitty-graphics escape sequences to reach Ghostty through tmux (inline images/mermaid in Markdown).
-- The `vim-tmux-navigator` tmux plugin pairs with the Neovim plugin so `<C-h/j/k/l>` moves between tmux panes and nvim splits transparently. Note: the `@plugin` line is TPM syntax, but no TPM bootstrap (`run '~/.tmux/plugins/tpm/tpm'`) appears in the file — if the tmux-side bindings don't work, install/initialize TPM or add the navigator bindings manually.
+- `allow-passthrough on` — **required** for image.nvim's kitty-graphics escapes to reach Ghostty through tmux (inline images/mermaid in Markdown).
+- The `vim-tmux-navigator` tmux plugin pairs with the Neovim plugin so `<C-h/j/k/l>` moves between tmux panes and nvim splits transparently. Note: the `@plugin` line is TPM syntax, but no TPM bootstrap (`run '~/.tmux/plugins/tpm/tpm'`) appears in the file — if the tmux-side bindings don't work, install TPM or add the bindings manually.
 
 **Ghostty** (`~/Library/Application Support/com.mitchellh.ghostty/config`):
 
@@ -354,23 +370,32 @@ theme = "3024 Night"
 shell-integration = "zsh"
 ```
 
-Ghostty implements the kitty graphics protocol, which is why `image.nvim` is configured with `backend = "kitty"`.
+Ghostty implements the kitty graphics protocol, which is why `image.nvim` uses `backend = "kitty"`.
 
 ---
 
 ## Nuances & Gotchas
 
-- **Two completion engines are installed**: `blink.cmp` *and* `nvim-cmp` are both active specs with full configs. LSP capabilities are wired to **blink.cmp** (in `nvim-lspconfig.lua`), so blink is the "real" one; the nvim-cmp spec (with LuaSnip and the cmp-* sources) is still loaded and may double-populate menus. If you see duplicate popups, retire `lua/plugins/nvim-cmp.lua`.
-- **Duplicate/conflicting DAP keymaps**: `core/keymaps.lua` has an older "Debugging" section (`<leader>bb`, `<leader>dc`, `<leader>dj`…) while `config/dap/init.lua` defines the current set (`<F5>`–`<F12>`, `<leader>b`, …). Several LHS collide (`<leader>bl`, `<leader>br`, `<leader>dr`, `<leader>dt`, `<leader>dl`, `<leader>de`) — whichever loads last wins (config/dap loads lazily on first DAP key). Also `<leader>ba` is defined twice in `core/keymaps.lua` itself (close-all-buffers, then Telescope DAP breakpoints — the latter wins).
-- **Dead keymaps** (plugins no longer installed): `<leader>sm` (`:MaximizerToggle`, vim-maximizer absent), `<leader>mv` (`:Markview`, markview.nvim retired to `.deprecated.txt`), `<leader>xr` (`VrcQuery`, vim-rest-console replaced by Kulala).
-- **`<leader>rr` and `<leader>dr` are context-dependent**: globally rename / DAP-REPL, but rustaceanvim rebinds them per-buffer to Runnables / Debuggables in Rust files.
-- **`lazy-lock.json` is gitignored** — plugin versions are not reproducible from the repo alone.
-- **Python lint config discovery**: `pylsp` looks for a **`.code_quality/`** directory at the project root containing `.flake8`, `.pylintrc`, and/or `mypy.ini` and wires them automatically (`before_init` in `nvim-lspconfig.lua`).
-- **`.vscode/launch.json` is honored**: DAP merges it at startup and on every `:cd` (types `python`, `debugpy`, `go`).
-- **Format-on-save is split-brain by design**: conform.nvim formats everything *except* Go (gopls autocmd) and Rust (rustaceanvim autocmd); eslint fix-all runs on JS/TS saves in addition to prettier.
-- **Markdown buffers change navigation**: `ftplugin/markdown.lua` remaps `j`/`k` to `gj`/`gk` and turns on spell-checking in **English + Spanish** (Spanish dictionary shipped in `spell/`).
-- **Retired specs live as `*.deprecated.txt`** in `lua/plugins/` (old dap-ui/dap-virtual-text standalone specs, markdown.nvim, markview.nvim) — reference only, not loaded.
+- **Treesitter `main` branch — no auto-install**: opening a filetype whose parser isn't in the `ensure_installed` list gives plain highlighting. Add it to `lua/plugins/nvim-treesitter.lua` or `:TSInstall <lang>`.
+- **Rust buffers rebind two keys**: `<leader>rx` = runnables, `<leader>dr` = debuggables (buffer-local, from rustaceanvim). `<leader>rr` rename works everywhere, Rust included.
+- **`<leader>de` vs `<leader>dE`**: lowercase opens Telescope error diagnostics; capital evaluates an expression in a DAP session.
+- **Format-on-save is split-brain by design**: conform formats everything *except* Go (gopls autocmd) and Rust (rustaceanvim autocmd); eslint fix-all additionally runs on JS/TS saves.
+- **Python projects**: ruff and basedpyright read `pyproject.toml` / `ruff.toml` / `pyrightconfig.json` from the project root natively. (The old pylsp `.code_quality/` discovery was retired with the pylsp → basedpyright+ruff migration.)
+- **`.vscode/launch.json` is honored** and re-read on `:cd` — types `python`/`debugpy`, `go`, `lldb`/`codelldb`, `node`/`pwa-node`, `chrome`/`pwa-chrome`.
+- **jdtls needs Java 17+ on PATH** and is slow on first open of a project (it indexes into a per-project workspace under `stdpath("data")/jdtls-workspaces/`).
+- **Harpoon v2 storage**: marks made with the old v1 (pre-migration) are not carried over — re-add per project.
+- **Markdown buffers change navigation**: `ftplugin/markdown.lua` remaps `j`/`k` to `gj`/`gk` and enables **English + Spanish** spell — strictly buffer-local.
+- **LSP keymaps only exist where a server is attached** (LspAttach autocmd) — in a plain scratch buffer, `<leader>gd` does nothing rather than erroring.
+- **snacks.picker is disabled** (telescope is the picker); the `<leader>gh*` GitHub keys still work because explicit `Snacks.picker.*` calls load the module on demand.
 - **gitgraph deliberately avoids `--all`** to keep Claude Code worktree/stash refs out of the graph.
-- **Kulala default mappings are disabled** (`vim.g.kulala_disable_default_mappings = true`); only the custom `<leader>R…` set exists, and its UI buffers get line numbers via a `WinEnter` autocmd.
-- **Terminal-mode escape hatch** is per-buffer via a `TermOpen` autocmd (`<Esc>` → normal mode, `<C-h/j/k/l>` window moves) — applies to floatterm and `:terminal` alike.
-- **Overlapping `<leader>j` prefixes**: `<leader>jf` (conform format) vs `<leader>jff`/`<leader>jmf` (json-nvim) — the format mapping waits for `timeoutlen` in JSON files.
+- **Kulala default mappings are disabled**; only the custom `<leader>R…` set exists.
+- **Prefix conventions**: `<leader>h*` harpoon vs `<leader>H*` git hunks; `<leader>n*` tests vs `<leader>N*` package.json — capitals disambiguate deliberately.
+- **Optional, installed-but-unconfigured**: `ltex-ls-plus` sits in Mason if you ever want grammar checking over the bilingual spell setup.
+
+---
+
+## Maintenance
+
+- The 2026-08 audit lives in [`DIAGNOSTIC.md`](./DIAGNOSTIC.md); the cleanup was executed task-by-task via [`SDD_PLAN.md`](./SDD_PLAN.md) (three phases + treesitter migration, with a progress log of measured results).
+- Update policy: `:Lazy update` → test → commit `lazy-lock.json`.
+- New machine: clone, open nvim, wait for lazy + Mason, then `:MasonToolsInstallSync`.

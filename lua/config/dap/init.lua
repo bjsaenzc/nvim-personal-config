@@ -111,16 +111,19 @@ map("<leader>dp", dap.pause,      "DAP: Pause thread")
 
 -- UI
 map("<leader>du", dapui.toggle, "DAP UI: Toggle panels")
-map("<leader>de", function() dapui.eval(nil, { enter = true }) end, "DAP UI: Eval under cursor")
+-- <leader>dE (capital E): <leader>de belongs to Telescope error diagnostics
+map("<leader>dE", function() dapui.eval(nil, { enter = true }) end, "DAP UI: Eval under cursor")
 
 -- Visual-mode eval
-vim.keymap.set("v", "<leader>de", function() dapui.eval() end, { silent = true, desc = "DAP UI: Eval selection" })
+vim.keymap.set("v", "<leader>dE", function() dapui.eval() end, { silent = true, desc = "DAP UI: Eval selection" })
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. Language adapters (order does not matter)
 -- ─────────────────────────────────────────────────────────────────────────────
 require("config.dap.python")
 require("config.dap.go")
+require("config.dap.c")
+require("config.dap.js")
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6. VS Code launch.json integration
@@ -139,16 +142,26 @@ require("config.dap.go")
 --   "python"       │  python         │  standard Python adapter
 --   "debugpy"      │  python         │  used by some VS Code Python extensions
 --   "go"           │  go             │  standard Go / Delve adapter
+--   "lldb"/"codelldb" │ c, cpp, rust │  codelldb adapter (config.dap.c)
+--   "node"/"pwa-node" │ js/ts fts    │  vscode-js-debug (config.dap.js)
+--   "chrome"/"pwa-chrome" │ js/ts fts │  vscode-js-debug browser debugging
 -- ─────────────────────────────────────────────────────────────────────────────
 local vscode_ext = require("dap.ext.vscode")
 
 --- Load (or reload) .vscode/launch.json from cwd.
 --- Wrapped in pcall so a missing or malformed file is a warning, not a crash.
 local function load_vscode_launch()
+  local js_fts = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
   local ok, err = pcall(vscode_ext.load_launchjs, nil, {
-    python  = { "python" },
-    debugpy = { "python" },
-    go      = { "go" },
+    python       = { "python" },
+    debugpy      = { "python" },
+    go           = { "go" },
+    lldb         = { "c", "cpp", "rust" },
+    codelldb     = { "c", "cpp", "rust" },
+    node         = js_fts,
+    ["pwa-node"] = js_fts,
+    chrome       = js_fts,
+    ["pwa-chrome"] = js_fts,
   })
   if not ok then
     -- Only warn when the file exists but failed to parse; skip when absent.

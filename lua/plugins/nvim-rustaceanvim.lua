@@ -2,7 +2,7 @@ return {
   -- 1. The Rust plugin itself
   {
     'mrcjkb/rustaceanvim',
-    version = '^5', -- Recommended
+    version = '^6', -- Recommended
     lazy = false, -- This plugin is already lazy
     config = function()
       -- Create an augroup for formatting
@@ -25,11 +25,11 @@ return {
 
             map('<leader>ca', function() vim.cmd.RustLsp('codeAction') end, 'Code Action')
             map('<leader>dr', function() vim.cmd.RustLsp('debuggables') end, 'Debuggables')
-            map('<leader>rr', function() vim.cmd.RustLsp('runnables') end, 'Runnables')
+            map('<leader>rx', function() vim.cmd.RustLsp('runnables') end, 'Runnables') -- not <leader>rr: that is LSP rename
             map('K', function() vim.cmd.RustLsp { 'hover', 'actions' } end, 'Hover Actions')
 
             -- 2. Set up auto-formatting on save
-            if client.supports_method("textDocument/formatting") then
+            if client:supports_method("textDocument/formatting") then
               -- Clear existing formatting autocommands for this buffer to prevent duplicates
               vim.api.nvim_clear_autocmds({ group = format_sync_grp, buffer = bufnr })
               -- Create the formatting autocommand
@@ -55,8 +55,10 @@ return {
                   enable = true,
                 },
               },
-              -- Add clippy lints for Rust
-              checkOnSave = {
+              -- Add clippy lints for Rust (modern shape: checkOnSave is a boolean,
+              -- the command lives in the separate `check` table)
+              checkOnSave = true,
+              check = {
                 allFeatures = true,
                 command = "clippy",
                 extraArgs = { "--no-deps" },
@@ -72,10 +74,8 @@ return {
             },
           },
         },
-        -- DAP configuration (for debugging)
-        dap = {
-          -- Adapter config can go here if you use nvim-dap
-        },
+        -- DAP: no explicit adapter needed — rustaceanvim auto-discovers the
+        -- Mason-installed codelldb (same binary lua/config/dap/c.lua uses).
       }
     end
   },
@@ -90,13 +90,7 @@ return {
     end,
   },
 
-  -- 3. Make sure Treesitter parses Rust
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      if type(opts.ensure_installed) == "table" then
-        vim.list_extend(opts.ensure_installed, { "rust", "toml", "ron" })
-      end
-    end,
-  },
+  -- (rust/toml/ron treesitter parsers live in nvim-treesitter.lua's
+  -- ensure_installed list — the main branch has no opts.ensure_installed
+  -- to extend from a sub-spec.)
 }

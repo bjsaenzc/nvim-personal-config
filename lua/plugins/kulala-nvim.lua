@@ -23,7 +23,7 @@ return {
     ui = {
       number = true,
       max_request_size = 10 * 1024 * 1024, -- 10MB
-      max_response_size = 20000000,        -- 1MB, adjust as needed
+      max_response_size = 20 * 1024 * 1024, -- 20MB, adjust as needed
     },
   },
 }

@@ -1,19 +1,17 @@
--- Set leader key to space
-vim.g.mapleader = " "
+-- Leader key (space) is set in init.lua, before lazy initializes
 
 local keymap = vim.keymap
 
 -- General keymaps
-keymap.set("n", "<leader>wq", ":wq<CR>")       -- save and quit
-keymap.set("n", "<leader>qq", ":q!<CR>")       -- quit without saving
-keymap.set("n", "<leader>ww", ":w<CR>")        -- save
-keymap.set("n", "Gx", ":!open <c-r><c-a><CR>") -- open URL under cursor
-keymap.set("n", "<leader>bn", ":bnext<CR>")    -- jump to next buffer
-keymap.set("n", "<leader>bp", ":bprev<CR>")    -- jump to prev buffer
-keymap.set("n", "<leader>bd", ":bd<CR>")       -- Close current buffer (fails if there are unsaved changes)
-keymap.set("n", "<leader>bD", ":bd!<CR>")      -- Close current buffer and discard unsaved changes
-keymap.set("n", "<leader>ba", ":%bd<CR>")      -- Close all buffers (fails if there are unsaved changes)
-keymap.set("n", "<leader>bA", ":%bd!<CR>")     -- Force close all buffers (discards unsaved changes)
+keymap.set("n", "<leader>wq", ":wq<CR>", { desc = "Save and quit" })
+keymap.set("n", "<leader>qq", ":q!<CR>", { desc = "Quit without saving" })
+keymap.set("n", "<leader>ww", ":w<CR>", { desc = "Save" })
+keymap.set("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
+keymap.set("n", "<leader>bp", ":bprev<CR>", { desc = "Previous buffer" })
+keymap.set("n", "<leader>bd", ":bd<CR>", { desc = "Close buffer (fails if unsaved)" })
+keymap.set("n", "<leader>bD", ":bd!<CR>", { desc = "Close buffer, discard changes" })
+keymap.set("n", "<leader>ba", ":%bd<CR>", { desc = "Close all buffers (fails if unsaved)" })
+keymap.set("n", "<leader>bA", ":%bd!<CR>", { desc = "Close all buffers, discard changes" })
 -- Close all buffers but current
 vim.keymap.set("n", "<leader>bo", function()
   local current = vim.api.nvim_get_current_buf()
@@ -30,21 +28,8 @@ end, { desc = "Close all buffers but current" })
 -- 3. Open previous file (e#)
 -- 4. Delete the temp buffer created by step 2 (bd#)
 vim.keymap.set("n", "<leader>bx", ":%bd|e#|bd#<CR>", { desc = "Close all but current (keep splits)" })
--- keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true }) -- Leaves terminal mode
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = '*',
-  callback = function()
-    -- Esc: Terminal mode → Normal mode
-    keymap.set('t', '<Esc>', [[<C-\><C-n>]], { buffer = 0, noremap = true, silent = true })
-
-    -- <C-h/j/k/l>: move to other windows while in terminal mode (optional)
-    keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-j>', [[<C-\><C-n><C-w>j]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { buffer = 0, noremap = true, silent = true })
-  end,
-})
-keymap.set("n", "<leader>bt", "<C-w>T") -- Open current buffer in a new tab
+-- Terminal-mode keymaps live in lua/core/autocmds.lua (TermOpen autocmd)
+keymap.set("n", "<leader>bt", "<C-w>T", { desc = "Open buffer in new tab" })
 -- Takes current tab and moves it as a split buffer into another tab
 keymap.set("n", "<leader>ts", function()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -58,8 +43,9 @@ keymap.set("n", "<leader>ts", function()
   -- Print tab list to help user choose
   for i = 1, total_tabs do
     local buflist = vim.fn.tabpagebuflist(i)
-    local bufname = vim.fn.bufname(buflist[i])
-    print(i .. ": " .. (buffname ~= "" and bufname or "[No Name]"))
+    -- buffer shown in the tab's current window (buflist is indexed by window, not tab)
+    local bufname = vim.fn.bufname(buflist[vim.fn.tabpagewinnr(i)])
+    print(i .. ": " .. (bufname ~= "" and bufname or "[No Name]"))
   end
 
   local target = tonumber(vim.fn.input("Move to tab number: "))
@@ -72,92 +58,51 @@ keymap.set("n", "<leader>ts", function()
   -- After closing, adjust target index if it was after current tab
   vim.cmd("vsplit")
   vim.api.nvim_set_current_buf(bufnr)
-end)
+end, { desc = "Move current tab into another tab as split" })
 
 -- Split window management
-keymap.set("n", "<leader>sv", "<C-w>v")     -- split window vertically
-keymap.set("n", "<leader>sh", "<C-w>s")     -- split window horizontally
-keymap.set("n", "<leader>se", "<C-w>=")     -- make split windows equal width
-keymap.set("n", "<leader>sx", ":close<CR>") -- close split window
-keymap.set("n", "<leader>sj", "<C-w>-")     -- make split window height shorter
-keymap.set("n", "<leader>sk", "<C-w>+")     -- make split windows height taller
-keymap.set("n", "<leader>sl", "<C-w>>5")    -- make split windows width bigger
-keymap.set("n", "<leader>sH", "<C-w><5")    -- make split windows width smaller
+keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })
+keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
+keymap.set("n", "<leader>se", "<C-w>=", { desc = "Equalize split sizes" })
+keymap.set("n", "<leader>sx", ":close<CR>", { desc = "Close split window" })
+keymap.set("n", "<leader>sj", "<C-w>-", { desc = "Shrink split height" })
+keymap.set("n", "<leader>sk", "<C-w>+", { desc = "Grow split height" })
+keymap.set("n", "<leader>sl", "<C-w>>5", { desc = "Grow split width" })
+keymap.set("n", "<leader>sH", "<C-w><5", { desc = "Shrink split width" })
 
 -- Tab management
-keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open a new tab
-keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close a tab
-keymap.set("n", "<leader>tn", ":tabn<CR>")     -- next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>")     -- previous tab
+keymap.set("n", "<leader>to", ":tabnew<CR>", { desc = "Open new tab" })
+keymap.set("n", "<leader>tx", ":tabclose<CR>", { desc = "Close tab" })
+keymap.set("n", "<leader>tn", ":tabn<CR>", { desc = "Next tab" })
+keymap.set("n", "<leader>tp", ":tabp<CR>", { desc = "Previous tab" })
 
 -- Diff keymaps
-keymap.set("n", "<leader>cc", ":diffput<CR>")   -- put diff from current to other during diff
-keymap.set("n", "<leader>cj", ":diffget 1<CR>") -- get diff from left (local) during merge
-keymap.set("n", "<leader>ck", ":diffget 3<CR>") -- get diff from right (remote) during merge
-keymap.set("n", "<leader>cn", "]c")             -- next diff hunk
-keymap.set("n", "<leader>cp", "[c")             -- previous diff hunk
+keymap.set("n", "<leader>cc", ":diffput<CR>", { desc = "Diff: put to other buffer" })
+keymap.set("n", "<leader>cj", ":diffget 1<CR>", { desc = "Diff: get from left (local)" })
+keymap.set("n", "<leader>ck", ":diffget 3<CR>", { desc = "Diff: get from right (remote)" })
+keymap.set("n", "<leader>cn", "]c", { desc = "Diff: next hunk" })
+keymap.set("n", "<leader>cp", "[c", { desc = "Diff: previous hunk" })
 
 -- Quickfix keymaps
-keymap.set("n", "<leader>qo", ":copen<CR>")  -- open quickfix list
-keymap.set("n", "<leader>qf", ":cfirst<CR>") -- jump to first quickfix list item
-keymap.set("n", "<leader>qn", ":cnext<CR>")  -- jump to next quickfix list item
-keymap.set("n", "<leader>qp", ":cprev<CR>")  -- jump to prev quickfix list item
-keymap.set("n", "<leader>ql", ":clast<CR>")  -- jump to last quickfix list item
-keymap.set("n", "<leader>qc", ":cclose<CR>") -- close quickfix list
-
--- Vim-maximizer
-keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>") -- toggle maximize tab
-
--- Nvim-Peek (Markdown Preview)
-vim.keymap.set("n", "<leader>mv", "<cmd>Markview splitToggle<CR>", { silent = true })
+keymap.set("n", "<leader>qo", ":copen<CR>", { desc = "Quickfix: open list" })
+keymap.set("n", "<leader>qf", ":cfirst<CR>", { desc = "Quickfix: first item" })
+keymap.set("n", "<leader>qn", ":cnext<CR>", { desc = "Quickfix: next item" })
+keymap.set("n", "<leader>qp", ":cprev<CR>", { desc = "Quickfix: previous item" })
+keymap.set("n", "<leader>ql", ":clast<CR>", { desc = "Quickfix: last item" })
+keymap.set("n", "<leader>qc", ":cclose<CR>", { desc = "Quickfix: close list" })
 
 -- Nvim-tree
-keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>")   -- toggle file explorer
-keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>")    -- toggle focus to file explorer
-keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>") -- find file in file explorer
+keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>", { desc = "Toggle file explorer" })
+keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>", { desc = "Focus file explorer" })
+keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>", { desc = "Find current file in explorer" })
 
--- Telescope
-keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, {})                -- fuzzy find files in project
-keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep, {})                 -- grep file contents in project
-keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, {})                   -- fuzzy find open buffers
-keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, {})                 -- fuzzy find help tags
-keymap.set('n', '<leader>fs', require('telescope.builtin').current_buffer_fuzzy_find, {}) -- fuzzy find in current file buffer
-keymap.set('n', '<leader>fa', function()
-  local path = vim.fn.expand("%:p:h")
-  require('telescope.builtin').live_grep({ search_dirs = { path } })
-end, {})                                                                             -- fuzzy grepfind contents in current buffer
-keymap.set('n', '<leader>fr', require('telescope.builtin').oldfiles, {})             -- fuzzy find LSP/class symbols
-keymap.set('n', '<leader>fo', require('telescope.builtin').lsp_document_symbols, {}) -- fuzzy find LSP/class symbols
-keymap.set('n', '<leader>fi', require('telescope.builtin').lsp_incoming_calls, {})   -- fuzzy find LSP/incoming calls
-keymap.set('n', '<leader>fm', function()
-  require('telescope.builtin').treesitter({ symbols = { 'function', 'method' } })
-end)
--- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({default_text=":method:"}) end) -- fuzzy find methods in current class
--- keymap.set('n', '<leader>fm', function() require('telescope.builtin').treesitter({symbols={'function'}}) end) -- fuzzy find methods in current class
-keymap.set('n', '<leader>ft', function() -- grep file contents in current nvim-tree node
-  local success, node = pcall(function() return require('nvim-tree.lib').get_node_at_cursor() end)
-  if not success or not node then return end;
-  require('telescope.builtin').live_grep({ search_dirs = { node.absolute_path } })
-end)
+-- Telescope keymaps live in lua/plugins/telescope-nvim.lua (`keys` table, lazy-loads the plugin)
 
--- Git-blame
-keymap.set("n", "<leader>gb", ":GitBlameToggle<CR>") -- toggle git blame
+-- Git blame (gitsigns)
+keymap.set("n", "<leader>gb", function() require("gitsigns").toggle_current_line_blame() end,
+  { desc = "Toggle current-line git blame" })
 
--- Harpoon
-keymap.set("n", "<leader>ha", require("harpoon.mark").add_file)
-keymap.set("n", "<leader>hh", require("harpoon.ui").toggle_quick_menu)
-keymap.set("n", "<leader>h1", function() require("harpoon.ui").nav_file(1) end)
-keymap.set("n", "<leader>h2", function() require("harpoon.ui").nav_file(2) end)
-keymap.set("n", "<leader>h3", function() require("harpoon.ui").nav_file(3) end)
-keymap.set("n", "<leader>h4", function() require("harpoon.ui").nav_file(4) end)
-keymap.set("n", "<leader>h5", function() require("harpoon.ui").nav_file(5) end)
-keymap.set("n", "<leader>h6", function() require("harpoon.ui").nav_file(6) end)
-keymap.set("n", "<leader>h7", function() require("harpoon.ui").nav_file(7) end)
-keymap.set("n", "<leader>h8", function() require("harpoon.ui").nav_file(8) end)
-keymap.set("n", "<leader>h9", function() require("harpoon.ui").nav_file(9) end)
-
--- Vim REST Console
-keymap.set("n", "<leader>xr", ":call VrcQuery()<CR>") -- Run REST query
+-- Harpoon keymaps live in lua/plugins/harpoon.lua (`keys` table, lazy-loads the plugin)
 
 -- Kulala REST Client
 vim.keymap.set("n", "<leader>Rs", "<cmd>lua require('kulala').run()<cr>", { desc = "Send the request", silent = true }) -- Run the current request
@@ -176,53 +121,8 @@ vim.keymap.set("n", "<leader>Rb", "<cmd>lua require('kulala').scratchpad()<cr>",
   { desc = "Open scratchpad", silent = true })                                                                          -- Open the scratchpad
 vim.keymap.set("n", "<leader>Rq", "<cmd>lua require('kulala').close()<cr>", { desc = "Close window", silent = true })   -- Close the Kulala window
 
--- LSP (See nvim-lspconfig.lua)
-keymap.set('n', '<leader>gg', '<cmd>lua vim.lsp.buf.hover()<CR>')
-keymap.set('n', '<leader>gd', '<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Gd', '<C-w>v<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Gh', '<C-w>s<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Tg', '<cmd>tab split | lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
-keymap.set('n', '<leader>gi', '<cmd>lua vim.lsp.buf.implementation()<CR>')
-keymap.set('n', '<leader>gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>')
-keymap.set('n', '<leader>gr', '<cmd>lua vim.lsp.buf.references()<CR>')
-keymap.set('n', '<leader>gs', '<cmd>lua vim.lsp.buf.signature_help()<CR>')
-keymap.set('n', '<leader>rr', '<cmd>lua vim.lsp.buf.rename()<CR>')
-keymap.set('n', '<leader>gf', '<cmd>lua vim.lsp.buf.format({async = true})<CR>')
-keymap.set('v', '<leader>gf', '<cmd>lua vim.lsp.buf.format({async = true})<CR>')
-keymap.set('n', '<leader>ga', '<cmd>lua vim.lsp.buf.code_action()<CR>')
-keymap.set('n', '<leader>gl', '<cmd>lua vim.diagnostic.open_float()<CR>')
-keymap.set('n', '<leader>gp', '<cmd>lua vim.diagnostic.goto_prev()<CR>')
-keymap.set('n', '<leader>gn', '<cmd>lua vim.diagnostic.goto_next()<CR>')
-keymap.set('n', '<leader>tr', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
-keymap.set('i', '<C-Space>', '<cmd>lua vim.lsp.buf.completion()<CR>')
+-- LSP keymaps live in lua/core/autocmds.lua (LspAttach autocmd, buffer-local)
 
--- Debugging
-keymap.set("n", "<leader>bb", "<cmd>lua require'dap'.toggle_breakpoint()<cr>")
-keymap.set("n", "<leader>bc", "<cmd>lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<cr>")
-keymap.set("n", "<leader>bl", "<cmd>lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<cr>")
-keymap.set("n", '<leader>br', "<cmd>lua require'dap'.clear_breakpoints()<cr>")
-keymap.set("n", '<leader>ba', '<cmd>Telescope dap list_breakpoints<cr>')
-keymap.set("n", "<leader>dc", "<cmd>lua require'dap'.continue()<cr>")
-keymap.set("n", "<leader>dj", "<cmd>lua require'dap'.step_over()<cr>")
-keymap.set("n", "<leader>dk", "<cmd>lua require'dap'.step_into()<cr>")
-keymap.set("n", "<leader>do", "<cmd>lua require'dap'.step_out()<cr>")
-keymap.set("n", '<leader>dd', function()
-  require('dap').disconnect(); require('dapui').close();
-end)
-keymap.set("n", '<leader>dt', function()
-  require('dap').terminate(); require('dapui').close();
-end)
-keymap.set("n", "<leader>dr", "<cmd>lua require'dap'.repl.toggle()<cr>")
-keymap.set("n", "<leader>dl", "<cmd>lua require'dap'.run_last()<cr>")
-keymap.set("n", '<leader>di', function() require "dap.ui.widgets".hover() end)
-keymap.set("n", '<leader>d?',
-  function()
-    local widgets = require "dap.ui.widgets"; widgets.centered_float(widgets.scopes)
-  end)
-keymap.set("n", '<leader>df', '<cmd>Telescope dap frames<cr>')
-keymap.set("n", '<leader>dh', '<cmd>Telescope dap commands<cr>')
-keymap.set("n", '<leader>de', function() require('telescope.builtin').diagnostics({ default_text = ":E:" }) end)
+-- Debugging keymaps live in lua/config/dap/init.lua (loaded via nvim-dap.lua `keys` triggers)
 
--- GH Github
-keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
+-- GitHub PR/issue pickers live in lua/plugins/nvim-snacks.lua (<leader>gh*)
