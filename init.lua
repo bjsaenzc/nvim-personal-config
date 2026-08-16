@@ -1,6 +1,6 @@
 -- Bootstrap lazy
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     "git",
     "clone",
@@ -12,8 +12,12 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- This has to be set before initializing lazy
+-- These have to be set before initializing lazy
 vim.g.mapleader = " "
+vim.g.maplocalleader = "," -- explicit localleader (vimtex's \l* family lives here)
+
+-- Options load before plugins so startup-loaded plugins see the final values
+require("core.options")
 
 -- Initialize lazy with dynamic loading of anything in the plugins directory
 require("lazy").setup("plugins", {
@@ -24,6 +28,6 @@ require("lazy").setup("plugins", {
 })
 
 -- These modules are not loaded by lazy
-require("core.options")
 require("core.keymaps")
+require("core.autocmds")
 

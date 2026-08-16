@@ -10,9 +10,11 @@ return {
     -- bigfile = { enabled = true },
     dashboard = { enabled = true },
     explorer = { enabled = false },
-    indent = { enabled = true },
+    indent = { enabled = true }, -- sole indent-guide provider (indent-blankline removed, P2-03)
     input = { enabled = true },
-    picker = { enabled = true },
+    -- telescope is the primary picker/vim.ui.select; explicit Snacks.picker.* calls
+    -- (gh keys below) still work with the module disabled (P2-03)
+    picker = { enabled = false },
     notifier = { enabled = true },
     quickfile = { enabled = true },
     scope = { enabled = true },
@@ -28,7 +30,7 @@ return {
     { "<leader>ghp", function() Snacks.picker.gh_pr() end, desc = "GitHub Pull Requests (open)" },
     { "<leader>ghP", function() Snacks.picker.gh_pr({ state = "all" }) end, desc = "GitHub Pull Requests (all)" },
     { "<leader>Gf", function() Snacks.picker.git_files() end, desc = "Snacks: Git files picker" },
-    { "<leader>git", function() Snacks.lazygit() end, desc = "Snacks: Lazygit" },
+    { "<leader>gG", function() Snacks.lazygit() end, desc = "Snacks: Lazygit" }, -- not <leader>git: prefix-delays <leader>gi (goto implementation)
     { "<leader>Gs", function() Snacks.git.status() end, desc = "Snacks: Git status" },
   },
 }

@@ -54,31 +54,22 @@ return {
       desc = "GitGraph - Draw",
     },
   },
-  -- We use the config function to set highlights manually for a better look
+  -- Link highlights to standard groups so any colorscheme applies (P2-12;
+  -- previously a hardcoded tokyonight-flavored palette)
   config = function(_, opts)
-    local colors = {
-      blue = "#82aaff",
-      green = "#c3e88d",
-      red = "#ff757f",
-      purple = "#c099ff",
-      yellow = "#ffc777",
-      grey = "#868d9c",
-      white = "#c8d3f5",
-    }
+    -- Graph parts
+    vim.api.nvim_set_hl(0, 'GitGraphHash',       { link = 'Comment' })
+    vim.api.nvim_set_hl(0, 'GitGraphTimestamp',  { link = 'Comment' })
+    vim.api.nvim_set_hl(0, 'GitGraphAuthor',     { link = 'Normal' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranchName', { link = 'Title' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranchTag',  { link = 'Constant' })
 
-    -- Set the highlights for the graph parts
-    vim.api.nvim_set_hl(0, 'GitGraphHash',       { fg = colors.grey })
-    vim.api.nvim_set_hl(0, 'GitGraphTimestamp',  { fg = colors.grey })
-    vim.api.nvim_set_hl(0, 'GitGraphAuthor',     { fg = colors.white })
-    vim.api.nvim_set_hl(0, 'GitGraphBranchName', { fg = colors.yellow, bold = true })
-    vim.api.nvim_set_hl(0, 'GitGraphBranchTag',  { fg = colors.red,    bold = true })
-
-    -- Set the colors for the graph lines (Branch1, Branch2, etc.)
-    vim.api.nvim_set_hl(0, 'GitGraphBranch1', { fg = colors.blue })
-    vim.api.nvim_set_hl(0, 'GitGraphBranch2', { fg = colors.green })
-    vim.api.nvim_set_hl(0, 'GitGraphBranch3', { fg = colors.purple })
-    vim.api.nvim_set_hl(0, 'GitGraphBranch4', { fg = colors.red })
-    vim.api.nvim_set_hl(0, 'GitGraphBranch5', { fg = colors.yellow })
+    -- Graph lines (Branch1, Branch2, etc.)
+    vim.api.nvim_set_hl(0, 'GitGraphBranch1', { link = 'Function' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranch2', { link = 'String' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranch3', { link = 'Keyword' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranch4', { link = 'DiagnosticError' })
+    vim.api.nvim_set_hl(0, 'GitGraphBranch5', { link = 'DiagnosticWarn' })
 
     require('gitgraph').setup(opts)
   end,
