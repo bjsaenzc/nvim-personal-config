@@ -90,13 +90,7 @@ return {
     end,
   },
 
-  -- 3. Make sure Treesitter parses Rust
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      if type(opts.ensure_installed) == "table" then
-        vim.list_extend(opts.ensure_installed, { "rust", "toml", "ron" })
-      end
-    end,
-  },
+  -- (rust/toml/ron treesitter parsers live in nvim-treesitter.lua's
+  -- ensure_installed list — the main branch has no opts.ensure_installed
+  -- to extend from a sub-spec.)
 }
