@@ -210,61 +210,61 @@
 -- }
 
 -- Nightfox - Carbonfox
--- return {
---   "EdenEast/nightfox.nvim",
---   opts = {
---     options = {
---       -- Compiled file's destination location
---       compile_path = vim.fn.stdpath("cache") .. "/nightfox",
---       compile_file_suffix = "_compiled",
---       transparent = false, -- Disable setting background
---       terminal_colors = true, -- Set terminal colors (vim.g.terminal_color_*) used in `:terminal`
---       dim_inactive = false, -- Non focus panes set to alternative background
---       module_default = true, -- Default enable value for modules
---       colorbind = {
---         enable = false,
---         severity = {
---           protan = 0, -- Severity [0,1] for protan (red)
---           deutan = 0, -- Severity [0,1] for deutan (green)
---           tritan = 0, -- Severity [0,1] for tritan (blue)
---         },
---       },
---       styles = {
---         comments = "italic",
---         conditionals ="NONE",
---         constants = "NONE",
---         functions ="NONE",
---         keywords = "NONE",
---         numbers = "NONE",
---         operators = "NONE",
---         strings = "NONE",
---         types = "NONE",
---         variables = "NONE",
---       },
---       inverse = {
---         match_paren = false,
---         visual = false,
---         search = false,
---       },
---     },
---     palettes = {},
---     specs = {},
---     groups = {},
---   },
---   config = function(_, opts)
---     require("nightfox").setup(opts)
---     vim.cmd("colorscheme carbonfox")
---   end,
--- }
-
--- VS Code - arctic
 return {
-	"rockyzhang24/arctic.nvim",
-	dependencies = { "rktjmp/lush.nvim" },
-	name = "arctic",
-	branch = "main",
-	priority = 1000,
-	config = function()
-		vim.cmd("colorscheme arctic")
+	"EdenEast/nightfox.nvim",
+	opts = {
+		options = {
+			-- Compiled file's destination location
+			compile_path = vim.fn.stdpath("cache") .. "/nightfox",
+			compile_file_suffix = "_compiled",
+			transparent = false, -- Disable setting background
+			terminal_colors = true, -- Set terminal colors (vim.g.terminal_color_*) used in `:terminal`
+			dim_inactive = false, -- Non focus panes set to alternative background
+			module_default = true, -- Default enable value for modules
+			colorbind = {
+				enable = false,
+				severity = {
+					protan = 0, -- Severity [0,1] for protan (red)
+					deutan = 0, -- Severity [0,1] for deutan (green)
+					tritan = 0, -- Severity [0,1] for tritan (blue)
+				},
+			},
+			styles = {
+				comments = "italic",
+				conditionals = "NONE",
+				constants = "NONE",
+				functions = "NONE",
+				keywords = "NONE",
+				numbers = "NONE",
+				operators = "NONE",
+				strings = "NONE",
+				types = "NONE",
+				variables = "NONE",
+			},
+			inverse = {
+				match_paren = false,
+				visual = false,
+				search = false,
+			},
+		},
+		palettes = {},
+		specs = {},
+		groups = {},
+	},
+	config = function(_, opts)
+		require("nightfox").setup(opts)
+		vim.cmd("colorscheme carbonfox")
 	end,
 }
+
+-- VS Code - arctic
+-- return {
+-- 	"rockyzhang24/arctic.nvim",
+-- 	dependencies = { "rktjmp/lush.nvim" },
+-- 	name = "arctic",
+-- 	branch = "main",
+-- 	priority = 1000,
+-- 	config = function()
+-- 		vim.cmd("colorscheme arctic")
+-- 	end,
+-- }
