@@ -18,6 +18,7 @@ return {
       { "<leader>H", group = "Git hunks" },
       { "<leader>j", group = "Format" },
       { "<leader>n", group = "Tests (neotest)" },
+      { "<leader>N", group = "npm (package.json)" },
       { "<leader>q", group = "Quickfix / Sessions" },
       { "<leader>R", group = "REST (kulala)" },
       { "<leader>s", group = "Splits" },
