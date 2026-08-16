@@ -410,5 +410,6 @@ Hard dependencies only; everything else can reorder. The only cross-phase coupli
 | 2026-08-16 | Baseline (re-measured pre-P1) | — | 156.8 (warm median) | 44/67 |
 | 2026-08-16 | P1-13 gate — Phase 1 complete | All AC pass; V4 no dupes; V5 exit=1; `:checkhealth lazy` clean | **59.5 (warm median)** | **13/59** |
 | 2026-08-16 | Phase 2 complete (P2-01…P2-12) | All static AC pass; V4 no dupes; `:checkhealth lazy` clean; P2-11 spike → documented pin fallback | **57.7 (warm median)** | **13/55** |
+| 2026-08-16 | Phase 3 complete (P3-01…P3-10) | All static AC pass; DAP adapters (codelldb/pwa-node) registered; gitsigns attaches; hunks on `<leader>H*`; sessions on `<leader>qs`/`qS`; `:checkhealth` clean (which-key notes optional mini.icons) | **57.4 (warm median)** | **13/62** |
 
 > Keep this table updated at each phase gate; it is the objective record that the plan's targets (≤150 ms, ≤20 startup plugins, zero keymap conflicts, full language matrix) were met.

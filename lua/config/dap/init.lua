@@ -122,6 +122,8 @@ vim.keymap.set("v", "<leader>dE", function() dapui.eval() end, { silent = true, 
 -- ─────────────────────────────────────────────────────────────────────────────
 require("config.dap.python")
 require("config.dap.go")
+require("config.dap.c")
+require("config.dap.js")
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6. VS Code launch.json integration
@@ -140,16 +142,26 @@ require("config.dap.go")
 --   "python"       │  python         │  standard Python adapter
 --   "debugpy"      │  python         │  used by some VS Code Python extensions
 --   "go"           │  go             │  standard Go / Delve adapter
+--   "lldb"/"codelldb" │ c, cpp, rust │  codelldb adapter (config.dap.c)
+--   "node"/"pwa-node" │ js/ts fts    │  vscode-js-debug (config.dap.js)
+--   "chrome"/"pwa-chrome" │ js/ts fts │  vscode-js-debug browser debugging
 -- ─────────────────────────────────────────────────────────────────────────────
 local vscode_ext = require("dap.ext.vscode")
 
 --- Load (or reload) .vscode/launch.json from cwd.
 --- Wrapped in pcall so a missing or malformed file is a warning, not a crash.
 local function load_vscode_launch()
+  local js_fts = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
   local ok, err = pcall(vscode_ext.load_launchjs, nil, {
-    python  = { "python" },
-    debugpy = { "python" },
-    go      = { "go" },
+    python       = { "python" },
+    debugpy      = { "python" },
+    go           = { "go" },
+    lldb         = { "c", "cpp", "rust" },
+    codelldb     = { "c", "cpp", "rust" },
+    node         = js_fts,
+    ["pwa-node"] = js_fts,
+    chrome       = js_fts,
+    ["pwa-chrome"] = js_fts,
   })
   if not ok then
     -- Only warn when the file exists but failed to parse; skip when absent.

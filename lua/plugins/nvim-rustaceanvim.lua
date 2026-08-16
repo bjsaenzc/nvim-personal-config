@@ -74,10 +74,8 @@ return {
             },
           },
         },
-        -- DAP configuration (for debugging)
-        dap = {
-          -- Adapter config can go here if you use nvim-dap
-        },
+        -- DAP: no explicit adapter needed — rustaceanvim auto-discovers the
+        -- Mason-installed codelldb (same binary lua/config/dap/c.lua uses).
       }
     end
   },

@@ -98,8 +98,9 @@ keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>", { d
 
 -- Telescope keymaps live in lua/plugins/telescope-nvim.lua (`keys` table, lazy-loads the plugin)
 
--- Git-blame
-keymap.set("n", "<leader>gb", ":GitBlameToggle<CR>", { desc = "Toggle git blame" })
+-- Git blame (gitsigns)
+keymap.set("n", "<leader>gb", function() require("gitsigns").toggle_current_line_blame() end,
+  { desc = "Toggle current-line git blame" })
 
 -- Harpoon keymaps live in lua/plugins/harpoon.lua (`keys` table, lazy-loads the plugin)
 

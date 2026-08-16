@@ -12,8 +12,12 @@ return {
       'basedpyright', -- Python type-checking LSP (P2-06)
       'debugpy',      -- Python DAP adapter
       'delve',        -- Go DAP adapter
-      'codelldb',     -- Rust/C DAP adapter (wired in Phase 3)
-      'clang-format', -- C/C++ formatter (wired in Phase 3)
+      'codelldb',     -- Rust/C DAP adapter (config/dap/c.lua + rustaceanvim)
+      'clang-format', -- C/C++ formatter (conform)
+      'jdtls',        -- Java LSP (ftplugin/java.lua; needs Java 17+ on PATH)
+      'js-debug-adapter', -- JS/TS DAP (config/dap/js.lua)
+      'markdownlint', -- Markdown style linter/fixer (conform)
+      'latexindent',  -- LaTeX formatter (conform)
     },
   },
 }

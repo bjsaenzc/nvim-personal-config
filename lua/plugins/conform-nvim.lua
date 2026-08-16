@@ -25,10 +25,16 @@ return {
 			css = { "prettierd", "prettier", stop_after_first = true },
 			scss = { "prettierd", "prettier", stop_after_first = true },
 			html = { "prettierd", "prettier", stop_after_first = true },
-			markdown = { "prettierd", "prettier", stop_after_first = true },
+			-- prettierd formats, then markdownlint --fix cleans style violations.
+			-- (No prettier fallback here: stop_after_first would skip markdownlint,
+			-- and Mason guarantees prettierd exists.)
+			markdown = { "prettierd", "markdownlint" },
 			yaml = { "prettierd", "prettier", stop_after_first = true },
 			lua = { "stylua" },
 			python = { "ruff_organize_imports", "ruff_format" },
+			c = { "clang_format" },
+			cpp = { "clang_format" },
+			tex = { "latexindent" },
 		},
 		format_on_save = function(bufnr)
 			-- Let your Go autocmd / gopls own formatting for Go.

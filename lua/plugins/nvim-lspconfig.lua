@@ -28,6 +28,7 @@ return {
         'lua_ls',
         'basedpyright',
         'ruff',
+        'clangd',
         'gopls',
         'lemminx',
         'marksman',
@@ -83,6 +84,18 @@ return {
       },
     })
     vim.lsp.config('ruff', {})
+
+    -- C/C++ (clangd). Formatting goes through conform's clang_format;
+    -- debugging through codelldb (lua/config/dap/c.lua).
+    vim.lsp.config('clangd', {
+      root_markers = {
+        'compile_commands.json',
+        'compile_flags.txt',
+        '.clang-format',
+        'Makefile',
+        '.git',
+      },
+    })
 
     -- Golang LSP settings
     vim.lsp.config('gopls', {
