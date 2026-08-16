@@ -2,7 +2,7 @@ return {
   -- 1. The Rust plugin itself
   {
     'mrcjkb/rustaceanvim',
-    version = '^5', -- Recommended
+    version = '^6', -- Recommended
     lazy = false, -- This plugin is already lazy
     config = function()
       -- Create an augroup for formatting
@@ -29,7 +29,7 @@ return {
             map('K', function() vim.cmd.RustLsp { 'hover', 'actions' } end, 'Hover Actions')
 
             -- 2. Set up auto-formatting on save
-            if client.supports_method("textDocument/formatting") then
+            if client:supports_method("textDocument/formatting") then
               -- Clear existing formatting autocommands for this buffer to prevent duplicates
               vim.api.nvim_clear_autocmds({ group = format_sync_grp, buffer = bufnr })
               -- Create the formatting autocommand
@@ -55,8 +55,10 @@ return {
                   enable = true,
                 },
               },
-              -- Add clippy lints for Rust
-              checkOnSave = {
+              -- Add clippy lints for Rust (modern shape: checkOnSave is a boolean,
+              -- the command lives in the separate `check` table)
+              checkOnSave = true,
+              check = {
                 allFeatures = true,
                 command = "clippy",
                 extraArgs = { "--no-deps" },

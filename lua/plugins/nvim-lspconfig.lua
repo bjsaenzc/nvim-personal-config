@@ -26,11 +26,11 @@ return {
     require('mason-lspconfig').setup({
       ensure_installed = {
         'lua_ls',
-        'pylsp',
+        'basedpyright',
+        'ruff',
         'gopls',
         'lemminx',
         'marksman',
-        'quick_lint_js',
         'vtsls',
         'eslint',
         'emmet_language_server',
@@ -61,8 +61,12 @@ return {
       },
     })
 
-    -- Python LSP settings (pylsp)
-    vim.lsp.config('pylsp', {
+    -- Python: basedpyright (types) + ruff (lint + code actions); conform runs
+    -- ruff_format/ruff_organize_imports on save. Replaces pylsp+flake8/pylint/mypy,
+    -- whose plugins Mason never installed (P2-06). The old .code_quality/ per-project
+    -- discovery is retired: ruff and basedpyright read pyproject.toml / ruff.toml /
+    -- pyrightconfig.json from the project root natively.
+    vim.lsp.config('basedpyright', {
       root_markers = {
         'pyproject.toml',
         'setup.py',
@@ -71,51 +75,14 @@ return {
         '.git',
       },
       settings = {
-        pylsp = {
-          -- Only "pycodestyle" and "flake8" are valid configurationSources.
-          configurationSources = { "flake8" },
-          plugins = {
-            -- Disable built-in linters/formatters; we drive flake8/pylint/mypy.
-            pyflakes = { enabled = false },
-            pycodestyle = { enabled = false },
-            mccabe = { enabled = false },
-            yapf = { enabled = false },
-            flake8 = { enabled = true },
-            pylint = { enabled = true },
-            pylsp_mypy = { enabled = true },
+        basedpyright = {
+          analysis = {
+            typeCheckingMode = 'standard',
           },
         },
       },
-      before_init = function(_, config)
-        local root_dir = config.root_dir
-        if not root_dir then return end
-
-        local plugins = config.settings.pylsp.plugins
-        local cq = vim.fs.joinpath(root_dir, '.code_quality')
-
-        -- flake8: prefer .code_quality/.flake8 if present
-        local flake8_config = vim.fs.joinpath(cq, '.flake8')
-        if vim.uv.fs_stat(flake8_config) then
-          plugins.flake8 = { enabled = true, config = flake8_config }
-          config.settings.pylsp.configurationSources = { "flake8" }
-        end
-
-        -- pylint: prefer .code_quality/.pylintrc if present
-        local pylintrc = vim.fs.joinpath(cq, '.pylintrc')
-        if vim.uv.fs_stat(pylintrc) then
-          plugins.pylint = { enabled = true, args = { '--rcfile=' .. pylintrc } }
-        end
-
-        -- mypy: prefer .code_quality/mypy.ini if present
-        local mypyini = vim.fs.joinpath(cq, 'mypy.ini')
-        if vim.uv.fs_stat(mypyini) then
-          plugins.pylsp_mypy = {
-            enabled = true,
-            overrides = { '--config-file', mypyini, true },
-          }
-        end
-      end,
     })
+    vim.lsp.config('ruff', {})
 
     -- Golang LSP settings
     vim.lsp.config('gopls', {
@@ -249,7 +216,7 @@ return {
     -- Enable any servers not covered by mason-lspconfig's automatic_enable.
     -- (All of the above are in ensure_installed, so this is a no-op safety net;
     -- keep entries here only for servers you install outside Mason.)
-    -- vim.lsp.enable({ 'lua_ls', 'pylsp', 'gopls', 'lemminx', 'marksman', 'quick_lint_js' })
+    -- vim.lsp.enable({ 'lua_ls', 'basedpyright', 'ruff', 'gopls', 'lemminx', 'marksman' })
   end
 }
 

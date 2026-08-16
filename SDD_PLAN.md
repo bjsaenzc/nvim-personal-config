@@ -305,6 +305,8 @@ Port the `.code_quality/` per-project discovery (`before_init`, lines 89–117) 
 **Spec**: the `master` branch is frozen. In a dedicated branch, migrate to the rewritten `main` branch API (`require('nvim-treesitter').setup`/`install`, per-ft `vim.treesitter.start()` autocmd replacing `highlight = { enable = true }`). Timebox to one session; if plugins in the stack (demicolon/textobjects, render-markdown) aren't compatible yet, document blockers in this file and pin `branch = 'master'` **explicitly with a comment** as the conscious fallback.
 **AC**: `[auto]` highlighting active in lua/python/rust/tsx buffers (`nvim --headless file "+lua print(vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()] ~= nil)"…`) · `[manual]` textobjects and demicolon motions still work — or a dated blocker note exists in this file and the spec carries the explicit pin comment.
 
+> **Blocker note (2026-08-16, spike outcome — fallback taken):** `nvim-treesitter.lua` now pins `branch = 'master'` explicitly with a comment. Findings: demicolon is **compatible** with the main branch (it `pcall`-requires both the new `nvim-treesitter-textobjects.repeatable_move` and the legacy module path). Remaining blockers: (1) the migration must change four specs together — nvim-treesitter (new `setup`/`install` API + per-filetype `vim.treesitter.start()` autocmd replacing `highlight.enable`), nvim-treesitter-textobjects (main-branch rewrite has its own new setup and keymap API), rustaceanvim's treesitter sub-spec (extends `opts.ensure_installed`, which doesn't exist on main), and nvim-ts-autotag (compatibility unverified); (2) highlight/indent/textobject behavior needs interactive verification, so it must ride its own branch/PR after Phase 2 is committed, per the plan. Re-attempt as a standalone PR.
+
 ### P2-12 · Theme coherence — `M11`
 
 **Files**: `lua/plugins/lualine-nvim.lua`, `lua/plugins/nvim-gitgraph.lua`
@@ -407,5 +409,6 @@ Hard dependencies only; everything else can reorder. The only cross-phase coupli
 | 2026-08-16 | Baseline (audit) | — | 257.6 (cold) | 44/67 |
 | 2026-08-16 | Baseline (re-measured pre-P1) | — | 156.8 (warm median) | 44/67 |
 | 2026-08-16 | P1-13 gate — Phase 1 complete | All AC pass; V4 no dupes; V5 exit=1; `:checkhealth lazy` clean | **59.5 (warm median)** | **13/59** |
+| 2026-08-16 | Phase 2 complete (P2-01…P2-12) | All static AC pass; V4 no dupes; `:checkhealth lazy` clean; P2-11 spike → documented pin fallback | **57.7 (warm median)** | **13/55** |
 
 > Keep this table updated at each phase gate; it is the objective record that the plan's targets (≤150 ms, ≤20 startup plugins, zero keymap conflicts, full language matrix) were met.

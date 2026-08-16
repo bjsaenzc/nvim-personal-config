@@ -10,7 +10,7 @@ return {
   opts = {
     options = {
       -- For more themes, see https://github.com/nvim-lualine/lualine.nvim/blob/master/THEMES.md
-      theme = "codedark", -- "auto, tokyonight, catppuccin, codedark, nord" 
+      theme = "auto", -- follow the active colorscheme instead of a hardcoded one
     },
     sections = {
       lualine_c = {

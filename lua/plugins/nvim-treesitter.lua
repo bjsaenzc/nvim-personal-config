@@ -2,6 +2,9 @@
 return {
   -- https://github.com/nvim-treesitter/nvim-treesitter
   'nvim-treesitter/nvim-treesitter',
+  -- CONSCIOUS PIN (P2-11): development moved to the rewritten `main` branch;
+  -- `master` is frozen. Migration deferred — see SDD_PLAN.md P2-11 blocker note.
+  branch = 'master',
   event = { 'BufReadPre', 'BufNewFile' },
   dependencies = {
     -- https://github.com/nvim-treesitter/nvim-treesitter-textobjects

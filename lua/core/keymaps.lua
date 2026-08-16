@@ -3,15 +3,15 @@
 local keymap = vim.keymap
 
 -- General keymaps
-keymap.set("n", "<leader>wq", ":wq<CR>")       -- save and quit
-keymap.set("n", "<leader>qq", ":q!<CR>")       -- quit without saving
-keymap.set("n", "<leader>ww", ":w<CR>")        -- save
-keymap.set("n", "<leader>bn", ":bnext<CR>")    -- jump to next buffer
-keymap.set("n", "<leader>bp", ":bprev<CR>")    -- jump to prev buffer
-keymap.set("n", "<leader>bd", ":bd<CR>")       -- Close current buffer (fails if there are unsaved changes)
-keymap.set("n", "<leader>bD", ":bd!<CR>")      -- Close current buffer and discard unsaved changes
-keymap.set("n", "<leader>ba", ":%bd<CR>")      -- Close all buffers (fails if there are unsaved changes)
-keymap.set("n", "<leader>bA", ":%bd!<CR>")     -- Force close all buffers (discards unsaved changes)
+keymap.set("n", "<leader>wq", ":wq<CR>", { desc = "Save and quit" })
+keymap.set("n", "<leader>qq", ":q!<CR>", { desc = "Quit without saving" })
+keymap.set("n", "<leader>ww", ":w<CR>", { desc = "Save" })
+keymap.set("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
+keymap.set("n", "<leader>bp", ":bprev<CR>", { desc = "Previous buffer" })
+keymap.set("n", "<leader>bd", ":bd<CR>", { desc = "Close buffer (fails if unsaved)" })
+keymap.set("n", "<leader>bD", ":bd!<CR>", { desc = "Close buffer, discard changes" })
+keymap.set("n", "<leader>ba", ":%bd<CR>", { desc = "Close all buffers (fails if unsaved)" })
+keymap.set("n", "<leader>bA", ":%bd!<CR>", { desc = "Close all buffers, discard changes" })
 -- Close all buffers but current
 vim.keymap.set("n", "<leader>bo", function()
   local current = vim.api.nvim_get_current_buf()
@@ -28,21 +28,8 @@ end, { desc = "Close all buffers but current" })
 -- 3. Open previous file (e#)
 -- 4. Delete the temp buffer created by step 2 (bd#)
 vim.keymap.set("n", "<leader>bx", ":%bd|e#|bd#<CR>", { desc = "Close all but current (keep splits)" })
--- keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true }) -- Leaves terminal mode
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = '*',
-  callback = function()
-    -- Esc: Terminal mode → Normal mode
-    keymap.set('t', '<Esc>', [[<C-\><C-n>]], { buffer = 0, noremap = true, silent = true })
-
-    -- <C-h/j/k/l>: move to other windows while in terminal mode (optional)
-    keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-j>', [[<C-\><C-n><C-w>j]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], { buffer = 0, noremap = true, silent = true })
-    keymap.set('t', '<C-l>', [[<C-\><C-n><C-w>l]], { buffer = 0, noremap = true, silent = true })
-  end,
-})
-keymap.set("n", "<leader>bt", "<C-w>T") -- Open current buffer in a new tab
+-- Terminal-mode keymaps live in lua/core/autocmds.lua (TermOpen autocmd)
+keymap.set("n", "<leader>bt", "<C-w>T", { desc = "Open buffer in new tab" })
 -- Takes current tab and moves it as a split buffer into another tab
 keymap.set("n", "<leader>ts", function()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -71,48 +58,48 @@ keymap.set("n", "<leader>ts", function()
   -- After closing, adjust target index if it was after current tab
   vim.cmd("vsplit")
   vim.api.nvim_set_current_buf(bufnr)
-end)
+end, { desc = "Move current tab into another tab as split" })
 
 -- Split window management
-keymap.set("n", "<leader>sv", "<C-w>v")     -- split window vertically
-keymap.set("n", "<leader>sh", "<C-w>s")     -- split window horizontally
-keymap.set("n", "<leader>se", "<C-w>=")     -- make split windows equal width
-keymap.set("n", "<leader>sx", ":close<CR>") -- close split window
-keymap.set("n", "<leader>sj", "<C-w>-")     -- make split window height shorter
-keymap.set("n", "<leader>sk", "<C-w>+")     -- make split windows height taller
-keymap.set("n", "<leader>sl", "<C-w>>5")    -- make split windows width bigger
-keymap.set("n", "<leader>sH", "<C-w><5")    -- make split windows width smaller
+keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })
+keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
+keymap.set("n", "<leader>se", "<C-w>=", { desc = "Equalize split sizes" })
+keymap.set("n", "<leader>sx", ":close<CR>", { desc = "Close split window" })
+keymap.set("n", "<leader>sj", "<C-w>-", { desc = "Shrink split height" })
+keymap.set("n", "<leader>sk", "<C-w>+", { desc = "Grow split height" })
+keymap.set("n", "<leader>sl", "<C-w>>5", { desc = "Grow split width" })
+keymap.set("n", "<leader>sH", "<C-w><5", { desc = "Shrink split width" })
 
 -- Tab management
-keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open a new tab
-keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close a tab
-keymap.set("n", "<leader>tn", ":tabn<CR>")     -- next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>")     -- previous tab
+keymap.set("n", "<leader>to", ":tabnew<CR>", { desc = "Open new tab" })
+keymap.set("n", "<leader>tx", ":tabclose<CR>", { desc = "Close tab" })
+keymap.set("n", "<leader>tn", ":tabn<CR>", { desc = "Next tab" })
+keymap.set("n", "<leader>tp", ":tabp<CR>", { desc = "Previous tab" })
 
 -- Diff keymaps
-keymap.set("n", "<leader>cc", ":diffput<CR>")   -- put diff from current to other during diff
-keymap.set("n", "<leader>cj", ":diffget 1<CR>") -- get diff from left (local) during merge
-keymap.set("n", "<leader>ck", ":diffget 3<CR>") -- get diff from right (remote) during merge
-keymap.set("n", "<leader>cn", "]c")             -- next diff hunk
-keymap.set("n", "<leader>cp", "[c")             -- previous diff hunk
+keymap.set("n", "<leader>cc", ":diffput<CR>", { desc = "Diff: put to other buffer" })
+keymap.set("n", "<leader>cj", ":diffget 1<CR>", { desc = "Diff: get from left (local)" })
+keymap.set("n", "<leader>ck", ":diffget 3<CR>", { desc = "Diff: get from right (remote)" })
+keymap.set("n", "<leader>cn", "]c", { desc = "Diff: next hunk" })
+keymap.set("n", "<leader>cp", "[c", { desc = "Diff: previous hunk" })
 
 -- Quickfix keymaps
-keymap.set("n", "<leader>qo", ":copen<CR>")  -- open quickfix list
-keymap.set("n", "<leader>qf", ":cfirst<CR>") -- jump to first quickfix list item
-keymap.set("n", "<leader>qn", ":cnext<CR>")  -- jump to next quickfix list item
-keymap.set("n", "<leader>qp", ":cprev<CR>")  -- jump to prev quickfix list item
-keymap.set("n", "<leader>ql", ":clast<CR>")  -- jump to last quickfix list item
-keymap.set("n", "<leader>qc", ":cclose<CR>") -- close quickfix list
+keymap.set("n", "<leader>qo", ":copen<CR>", { desc = "Quickfix: open list" })
+keymap.set("n", "<leader>qf", ":cfirst<CR>", { desc = "Quickfix: first item" })
+keymap.set("n", "<leader>qn", ":cnext<CR>", { desc = "Quickfix: next item" })
+keymap.set("n", "<leader>qp", ":cprev<CR>", { desc = "Quickfix: previous item" })
+keymap.set("n", "<leader>ql", ":clast<CR>", { desc = "Quickfix: last item" })
+keymap.set("n", "<leader>qc", ":cclose<CR>", { desc = "Quickfix: close list" })
 
 -- Nvim-tree
-keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>")   -- toggle file explorer
-keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>")    -- toggle focus to file explorer
-keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>") -- find file in file explorer
+keymap.set("n", "<leader>ee", ":NvimTreeToggle<CR>:NvimTreeResize 60<CR>", { desc = "Toggle file explorer" })
+keymap.set("n", "<leader>er", ":NvimTreeFocus<CR>:NvimTreeResize 60<CR>", { desc = "Focus file explorer" })
+keymap.set("n", "<leader>ef", ":NvimTreeFindFile<CR>:NvimTreeResize 60<CR>", { desc = "Find current file in explorer" })
 
 -- Telescope keymaps live in lua/plugins/telescope-nvim.lua (`keys` table, lazy-loads the plugin)
 
 -- Git-blame
-keymap.set("n", "<leader>gb", ":GitBlameToggle<CR>") -- toggle git blame
+keymap.set("n", "<leader>gb", ":GitBlameToggle<CR>", { desc = "Toggle git blame" })
 
 -- Harpoon keymaps live in lua/plugins/harpoon.lua (`keys` table, lazy-loads the plugin)
 
@@ -133,27 +120,8 @@ vim.keymap.set("n", "<leader>Rb", "<cmd>lua require('kulala').scratchpad()<cr>",
   { desc = "Open scratchpad", silent = true })                                                                          -- Open the scratchpad
 vim.keymap.set("n", "<leader>Rq", "<cmd>lua require('kulala').close()<cr>", { desc = "Close window", silent = true })   -- Close the Kulala window
 
--- LSP (See nvim-lspconfig.lua)
-keymap.set('n', '<leader>gg', '<cmd>lua vim.lsp.buf.hover()<CR>')
-keymap.set('n', '<leader>gd', '<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Gd', '<C-w>v<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Gh', '<C-w>s<cmd>lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>Tg', '<cmd>tab split | lua vim.lsp.buf.definition()<CR>')
-keymap.set('n', '<leader>gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
-keymap.set('n', '<leader>gi', '<cmd>lua vim.lsp.buf.implementation()<CR>')
-keymap.set('n', '<leader>gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>')
-keymap.set('n', '<leader>gr', '<cmd>lua vim.lsp.buf.references()<CR>')
-keymap.set('n', '<leader>gs', '<cmd>lua vim.lsp.buf.signature_help()<CR>')
-keymap.set('n', '<leader>rr', '<cmd>lua vim.lsp.buf.rename()<CR>')
-keymap.set('n', '<leader>gf', '<cmd>lua vim.lsp.buf.format({async = true})<CR>')
-keymap.set('v', '<leader>gf', '<cmd>lua vim.lsp.buf.format({async = true})<CR>')
-keymap.set('n', '<leader>ga', '<cmd>lua vim.lsp.buf.code_action()<CR>')
-keymap.set('n', '<leader>gl', '<cmd>lua vim.diagnostic.open_float()<CR>')
-keymap.set('n', '<leader>gp', '<cmd>lua vim.diagnostic.goto_prev()<CR>')
-keymap.set('n', '<leader>gn', '<cmd>lua vim.diagnostic.goto_next()<CR>')
-keymap.set('n', '<leader>tr', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
+-- LSP keymaps live in lua/core/autocmds.lua (LspAttach autocmd, buffer-local)
 
 -- Debugging keymaps live in lua/config/dap/init.lua (loaded via nvim-dap.lua `keys` triggers)
 
--- GH Github
-keymap.set("n", '<leader>GH', "<cmd>GH<cr>")
+-- GitHub PR/issue pickers live in lua/plugins/nvim-snacks.lua (<leader>gh*)

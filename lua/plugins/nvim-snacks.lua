@@ -10,9 +10,11 @@ return {
     -- bigfile = { enabled = true },
     dashboard = { enabled = true },
     explorer = { enabled = false },
-    indent = { enabled = true },
+    indent = { enabled = true }, -- sole indent-guide provider (indent-blankline removed, P2-03)
     input = { enabled = true },
-    picker = { enabled = true },
+    -- telescope is the primary picker/vim.ui.select; explicit Snacks.picker.* calls
+    -- (gh keys below) still work with the module disabled (P2-03)
+    picker = { enabled = false },
     notifier = { enabled = true },
     quickfile = { enabled = true },
     scope = { enabled = true },
