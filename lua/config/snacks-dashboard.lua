@@ -1,15 +1,20 @@
--- Snacks dashboard (start screen) config. Consumed by lua/plugins/nvim-snacks.lua
--- as `dashboard = require("config.snacks-dashboard")`, so the plugin spec stays
--- readable and all the aesthetics live here.
+-- Snacks dashboard (start screen). Consumed by lua/plugins/nvim-snacks.lua as:
+--   local dashboard = require("config.snacks-dashboard")
+--   opts = { dashboard = dashboard.opts, ... }
+--   keys = { { "<leader>bh", dashboard.open, ... } }
+-- so the plugin spec stays readable and all the aesthetics live here.
 --
--- Only shows when nvim starts with no file arguments. `<leader>bh` reopens it.
+-- Shows automatically when nvim starts with no file arguments; `<leader>bh`
+-- reopens it (see M.open below for why that isn't just Snacks.dashboard.open).
 --
 -- The `keys` below deliberately mirror the real keymaps (telescope-nvim.lua,
 -- core/keymaps.lua, persistence.lua) and label them with their leader key, so
 -- the dashboard is a cheat-sheet rather than a second set of bindings.
 
+local M = {}
+
 ---@type snacks.dashboard.Config
-return {
+M.opts = {
 	enabled = true,
 	width = 56,
 	pane_gap = 6,
@@ -88,3 +93,48 @@ return {
 		{ section = "startup" },
 	},
 }
+
+-- Window options the startup dashboard gets for free (snacks applies them via
+-- its own `dashboard` win style). Re-applied here because M.open reuses an
+-- ordinary window instead of letting snacks build one.
+local WIN_OPTS = {
+	colorcolumn = "",
+	cursorcolumn = false,
+	cursorline = false,
+	foldcolumn = "0",
+	list = false,
+	number = false,
+	relativenumber = false,
+	signcolumn = "no",
+	spell = false,
+	statuscolumn = "",
+	winbar = "",
+	wrap = false,
+}
+
+--- Reopen the dashboard in the current window.
+---
+--- Bare `Snacks.dashboard.open()` builds a full-editor *floating* window
+--- (Snacks.win with style "dashboard", zindex 10). The float covers the whole
+--- editor, so :NvimTreeToggle still runs but the tree is drawn underneath it —
+--- it looks like the explorer refuses to open. Rendering into a normal window
+--- instead, the way the VimEnter dashboard does, keeps the tree usable.
+function M.open()
+	-- Close the tree first, treating the dashboard as a full start screen.
+	-- Read package.loaded directly so this never force-loads a lazy nvim-tree.
+	local tree = package.loaded["nvim-tree.api"]
+	if tree then
+		pcall(tree.tree.close)
+	end
+
+	local win = vim.api.nvim_get_current_win()
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_win_set_buf(win, buf)
+	for opt, value in pairs(WIN_OPTS) do
+		pcall(vim.api.nvim_set_option_value, opt, value, { win = win, scope = "local" })
+	end
+
+	Snacks.dashboard.open({ buf = buf, win = win })
+end
+
+return M

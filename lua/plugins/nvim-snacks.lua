@@ -1,3 +1,6 @@
+-- Dashboard layout, art and its reopen helper live in lua/config/snacks-dashboard.lua
+local dashboard = require("config.snacks-dashboard")
+
 return {
 	"folke/snacks.nvim",
 	priority = 1000,
@@ -8,7 +11,7 @@ return {
 		-- or leave it empty to use the default settings
 		-- refer to the configuration section below
 		-- bigfile = { enabled = true },
-		dashboard = { enabled = true },
+		dashboard = dashboard.opts,
 		explorer = { enabled = false },
 		indent = { enabled = true }, -- sole indent-guide provider (indent-blankline removed, P2-03)
 		input = { enabled = true },
@@ -74,5 +77,6 @@ return {
 			end,
 			desc = "Snacks: Git status",
 		},
+		{ "<leader>bh", dashboard.open, desc = "Snacks: Open dashboard" },
 	},
 }
