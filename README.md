@@ -1,12 +1,12 @@
 # Neovim IDE Configuration
 
-Personal Neovim configuration used as a full IDE, built incrementally and then consolidated through a spec-driven cleanup (see [`DIAGNOSTIC.md`](./DIAGNOSTIC.md) and [`SDD_PLAN.md`](./SDD_PLAN.md)). It runs inside **Ghostty** (terminal) + **tmux** (multiplexer), with **[lazy.nvim](https://github.com/folke/lazy.nvim)** as the plugin manager.
+Personal Neovim configuration used as a full IDE, built incrementally and then consolidated through a spec-driven cleanup (the audit and plan are preserved in git history — PR #30). It runs inside **Ghostty** (terminal) + **tmux** (multiplexer), with **[lazy.nvim](https://github.com/folke/lazy.nvim)** as the plugin manager.
 
 Work covered by this setup:
 
 - **Backend**: Python, C, Java, Go, Rust — each with LSP, formatting, and debugging
 - **Frontend**: JavaScript, TypeScript, React (JSX/TSX), HTML/CSS — including Chrome/Node debugging
-- **Documentation**: Markdown (rendered in-buffer, browser preview, markdownlint) and LaTeX (VimTeX + Skim, latexindent)
+- **Documentation**: Markdown (rendered in-buffer, browser preview, markdownlint) and LaTeX (VimTeX + Skim, texlab + LTeX+ LSP, latexindent)
 - **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim)
 
 Leader key: **`<Space>`**. Local leader: **`,`** (used by VimTeX). Press `<Space>` and pause — **which-key** shows every group.
@@ -37,7 +37,7 @@ Startup is fully lazy-loaded: ~58 ms with 13 of 63 plugins loaded at startup (me
 
 **Everything else installs itself.** Two Mason mechanisms guarantee binaries on a fresh machine:
 
-- **LSP servers** (mason-lspconfig `ensure_installed`, auto-enabled): `lua_ls`, `basedpyright`, `ruff`, `clangd`, `gopls`, `lemminx`, `marksman`, `vtsls`, `eslint`, `emmet_language_server`
+- **LSP servers** (mason-lspconfig `ensure_installed`, auto-enabled): `lua_ls`, `basedpyright`, `ruff`, `clangd`, `gopls`, `lemminx`, `marksman`, `vtsls`, `eslint`, `emmet_language_server`, `texlab`, `ltex_plus`
 - **Formatters / debuggers / linters** (mason-tool-installer; run `:MasonToolsInstallSync` to force): `stylua`, `prettierd`, `ruff`, `basedpyright`, `debugpy`, `delve`, `codelldb`, `clang-format`, `jdtls`, `js-debug-adapter`, `markdownlint`, `latexindent`
 
 ---
@@ -69,11 +69,10 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 ~/.config/nvim
 ├── init.lua                        # Bootstrap: leaders → options → lazy.nvim → keymaps/autocmds
 ├── lazy-lock.json                  # Lockfile (tracked — pins every plugin commit)
-├── DIAGNOSTIC.md                   # Config audit (2026-08) that drove the cleanup
-├── SDD_PLAN.md                     # Spec-driven implementation plan + progress log
 ├── ftplugin/
 │   ├── markdown.lua                # Buffer-local: wrap, spell (en_us + es), j/k on wrapped lines
-│   └── java.lua                    # Starts/attaches jdtls with a per-project workspace
+│   ├── java.lua                    # Starts/attaches jdtls with a per-project workspace
+│   └── tex.lua                     # Buffer-local <leader>l* VimTeX mirrors + which-key groups
 ├── spell/
 │   ├── es.utf-8.spl                # Spanish spell dictionary
 │   └── es.utf-8.sug
@@ -133,7 +132,7 @@ Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nu
 | `telescope.nvim` (+ `plenary.nvim`, `telescope-fzf-native.nvim`) | Fuzzy finder; fzf native sorter; `filename_first` path display. Lazy-loads via its own `keys` table (`<leader>f…`) and `:Telescope`. |
 | `harpoon` (**harpoon2** branch, v2 API) | Per-project file marks. `<leader>ha` add, `<leader>hh` menu, `<leader>h1`–`h9` jump. Lazy-loads on its keys. |
 | `nvim-tree.lua` | File explorer (netrw disabled). `<leader>ee` toggle / `<leader>er` focus / `<leader>ef` find file — each resizes to width 60. Lazy on `cmd`. |
-| `nvim-treesitter` (**main branch**) | Highlighting + indent, rewritten API: parsers installed via `install()` (22 languages incl. `c`, `java`, `rust`, `markdown_inline`), enabled per-buffer by a `FileType` autocmd (`vim.treesitter.start()` + treesitter `indentexpr`). **No `auto_install`** — new languages go in the spec's `ensure_installed` list or `:TSInstall <lang>`. |
+| `nvim-treesitter` (**main branch**) | Highlighting + indent, rewritten API: parsers installed via `install()` (22 languages incl. `c`, `java`, `rust`, `markdown_inline`), enabled per-buffer by a `FileType` autocmd (`vim.treesitter.start()` + treesitter `indentexpr`). **No `auto_install`** — new languages go in the spec's `ensure_installed` list or `:TSInstall <lang>`. **`tex`/`bib` are deliberately excluded** — VimTeX owns LaTeX highlighting. |
 | `nvim-treesitter-textobjects` (**main branch**) | Provides `repeatable_move` for demicolon. |
 | `grug-far.nvim` | Project-wide search & replace with live ripgrep preview. `<leader>fR` (normal/visual), `:GrugFar`. |
 | `persistence.nvim` | Per-project sessions. `<leader>qs` restore cwd session, `<leader>qS` restore last, `<leader>qd` don't-save-on-exit. |
@@ -149,7 +148,7 @@ Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nu
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `nvim-lspconfig` | Native `vim.lsp.config()` API; capabilities from **blink.cmp**; `vim.o.winborder = 'rounded'`. Per-server settings: `lua_ls` (lazydev), `basedpyright` (typeCheckingMode `standard`), `ruff` (lint + code actions), `clangd` (root markers incl. `compile_commands.json`), `gopls` (staticcheck, gofumpt), `vtsls` (inlay hints), `eslint` (fix-all on save autocmd), `emmet_language_server`. Custom diagnostic signs, severity sort. |
+| `nvim-lspconfig` | Native `vim.lsp.config()` API; capabilities from **blink.cmp**; `vim.o.winborder = 'rounded'`. Per-server settings: `lua_ls` (lazydev), `basedpyright` (typeCheckingMode `standard`), `ruff` (lint + code actions), `clangd` (root markers incl. `compile_commands.json`), `gopls` (staticcheck, gofumpt), `vtsls` (inlay hints), `eslint` (fix-all on save autocmd), `emmet_language_server`, `texlab` (LaTeX intelligence, build-on-save off — VimTeX compiles), `ltex_plus` (grammar checker, filetypes trimmed to `tex`/`plaintex`/`bib`/`markdown`, `en-US`). Custom diagnostic signs, severity sort. |
 | `mason.nvim` + `mason-lspconfig.nvim` | LSP server installer with `automatic_enable` (list above). |
 | `mason-tool-installer.nvim` | Guarantees non-LSP binaries exist (formatters, DAP adapters, jdtls — list above). `:MasonToolsInstallSync`. |
 | `lazydev.nvim` | Lua LSP awareness of the Neovim API while editing this config. |
@@ -189,7 +188,7 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 
 | Plugin | Purpose / configuration here |
 |---|---|
-| `vimtex` | LaTeX: `latexmk` compiler, **Skim** viewer with SyncTeX, noisy warnings filtered. Its `\l…`-style maps live under localleader (`,`). |
+| `vimtex` | LaTeX: `latexmk` compiler, **Skim** viewer with SyncTeX, noisy warnings filtered. **Sole highlight provider for tex** (treesitter excluded — conceal/math zones need its syntax groups). `vimtex_version_check = 0` because nightly `0.x-dev` builds fail the stable-version gate. Native maps under localleader (`,l…`); `ftplugin/tex.lua` mirrors the main ones to `<leader>l*` (see keymaps). |
 | `telescope-bibtex.nvim` | `<leader>sb` — fuzzy-search BibTeX entries, insert citations. |
 | `rustaceanvim` (**v6**) | Rust IDE layer (rust-analyzer is *not* configured via lspconfig). Buffer-local keys: `<leader>ca` code action, `<leader>dr` debuggables, `<leader>rx` runnables, `K` hover actions. Format-on-save via rust-analyzer; clippy on save (modern `check` config shape); DAP via auto-discovered Mason codelldb. |
 | `crates.nvim` | Crate versions inside `Cargo.toml`. |
@@ -314,6 +313,21 @@ Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/core/autocmds.lua` (LS
 | `<leader>Rp` / `<leader>Rn` | Jump to prev / next request |
 | `<leader>Rc` / `<leader>Rb` / `<leader>Rq` | Copy as cURL / scratchpad / close |
 
+### LaTeX (buffer-local in `.tex` files — `ftplugin/tex.lua`)
+
+| Key | Action |
+|---|---|
+| `<leader>ll` | Compile (toggle continuous latexmk) |
+| `<leader>lv` | View PDF in Skim (forward search) |
+| `<leader>lc` / `<leader>lC` | Clean aux files / aux + output |
+| `<leader>le` | Compile errors (quickfix) |
+| `<leader>lt` | Table of contents |
+| `<leader>lk` / `<leader>li` | Stop compiler / project info |
+| `,l…` (localleader) | VimTeX's full native map set (same commands + more) |
+| `,` + pause | which-key shows the native VimTeX family |
+
+VimTeX text objects/motions also apply: `ic`/`ac` commands, `ie`/`ae` environments, `i$`/`a$` math, `]]`/`[[` sections, `cse`/`dse`/`tse` change/delete/toggle environment.
+
 ### AI (sidekick.nvim)
 
 | Key | Action |
@@ -337,12 +351,12 @@ Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/core/autocmds.lua` (LS
 | **Rust** | rust-analyzer via **rustaceanvim v6** | rust-analyzer on save | clippy on save | codelldb (auto-discovered): `<leader>dr` debuggables | — |
 | **JS / TS / React** | `vtsls` (inlay hints) + `eslint` (fix-all on save) + emmet | prettierd/prettier on save | eslint | vscode-js-debug: node file / attach / Chrome | neotest-jest |
 | **Lua** | `lua_ls` + lazydev | `stylua` | lua_ls | — | — |
-| **Markdown** | `marksman` | prettierd, then markdownlint `--fix` on save | markdownlint | — | — |
-| **LaTeX** | — (VimTeX workflow) | `latexindent` via conform; latexmk continuous compile | VimTeX quickfix (filtered) | — | — |
+| **Markdown** | `marksman` + `ltex_plus` (grammar) | prettierd, then markdownlint `--fix` on save | markdownlint | — | — |
+| **LaTeX** | `texlab` (labels/citations/refs) + `ltex_plus` (grammar) | `latexindent` via conform; latexmk continuous compile | ltex grammar diagnostics + VimTeX quickfix (filtered) | — | — |
 | **XML** | `lemminx` | — | — | — | — |
 | **JSON** | (via vtsls tooling) | prettierd/prettier | — | — | — |
 
-All treesitter parsers (22 languages) are declared in `lua/plugins/nvim-treesitter.lua` and installed automatically.
+All treesitter parsers (22 languages) are declared in `lua/plugins/nvim-treesitter.lua` and installed automatically. LaTeX is deliberately **not** among them — VimTeX's syntax highlighting is richer than the treesitter latex grammar, and the FileType autocmd skips `latex`/`bibtex` explicitly.
 
 ---
 
@@ -390,12 +404,47 @@ Ghostty implements the kitty graphics protocol, which is why `image.nvim` uses `
 - **gitgraph deliberately avoids `--all`** to keep Claude Code worktree/stash refs out of the graph.
 - **Kulala default mappings are disabled**; only the custom `<leader>R…` set exists.
 - **Prefix conventions**: `<leader>h*` harpoon vs `<leader>H*` git hunks; `<leader>n*` tests vs `<leader>N*` package.json — capitals disambiguate deliberately.
-- **Optional, installed-but-unconfigured**: `ltex-ls-plus` sits in Mason if you ever want grammar checking over the bilingual spell setup.
+- **VimTeX owns tex highlighting**: the treesitter FileType autocmd returns early for `latex`/`bibtex`. If LaTeX highlighting ever looks broken, check that no stray `latex.so` parser is being picked up (`:lua =vim.api.nvim_get_runtime_file('parser/latex*', true)` should be empty) — see the migration section below.
+- **VimTeX on nightly builds**: its version gate wants stable ≥ 0.12.4 and rejects `0.x-dev` nightlies (silently disabling *everything* — no commands, no maps, no syntax). The spec sets `vim.g.vimtex_version_check = 0` to bypass it.
+- **ltex_plus is slow to attach** (~10 s, Java) — grammar diagnostics appear a moment after texlab/marksman. Its filetypes are trimmed to `tex`/`plaintex`/`bib`/`markdown`; it no longer grabs gitcommit/html/text buffers. Language is `en-US` (change in `nvim-lspconfig.lua` for Spanish or per-project).
+
+---
+
+## Reproducing the LaTeX Setup on Another Machine
+
+Everything config-side ships with this repo — vimtex spec (viewer, compiler, version-check bypass), `ftplugin/tex.lua` keymaps, `texlab`/`ltex_plus` in `ensure_installed`, and the treesitter tex exclusion. On a **fresh machine** the normal bootstrap is enough:
+
+1. Install the external prerequisites: a TeX distribution with `latexmk`, and **Skim.app** (macOS PDF viewer with SyncTeX).
+2. Clone + open `nvim` — lazy installs plugins, Mason auto-installs `texlab` and `ltex-ls-plus`; run `:MasonToolsInstallSync` for `latexindent`.
+3. Done. Open a `.tex` file and verify (step "Verify" below).
+
+A machine that **ran this config before the treesitter `main`-branch migration** needs one extra cleanup. The old `master` branch compiled parsers *inside the plugin directory*, and that folder survives the branch switch. Those stale binaries stay on the runtimepath, silently treesitter-highlighting filetypes outside the curated list — including LaTeX, where they override VimTeX — and can mispaint buffers when paired with the `main` branch's newer query files.
+
+```bash
+# 1. Detect: any .so files here are stale master-era leftovers
+ls ~/.local/share/nvim/lazy/nvim-treesitter/parser/*.so
+
+# 2. Clean up: move the folder out of the plugin (reversible; or just delete it)
+mv ~/.local/share/nvim/lazy/nvim-treesitter/parser \
+   ~/.local/share/nvim/lazy/nvim-treesitter-stale-parsers-backup
+
+# 3. Confirm the real (main-branch) parsers are intact — the curated set lives here
+ls ~/.local/share/nvim/site/parser/
+```
+
+If step 3 shows parsers missing, open nvim and run `:TSInstall <lang>` (or just wait — the spec's `install()` call fetches missing ones on startup). After a few days without regressions, delete the backup folder.
+
+**Verify** (in a `.tex` buffer):
+
+- `:LspInfo` → `texlab` attached immediately; `ltex_plus` joins ~10 s later.
+- `:lua =vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()]` → `nil` (VimTeX syntax is the provider, not treesitter).
+- `<leader>ll` starts continuous compilation; `<leader>lv` forward-searches into Skim.
+- Sanity-check the other direction: in a `.lua` or `.py` buffer the same `highlighter.active` probe returns a table (treesitter on).
 
 ---
 
 ## Maintenance
 
-- The 2026-08 audit lives in [`DIAGNOSTIC.md`](./DIAGNOSTIC.md); the cleanup was executed task-by-task via [`SDD_PLAN.md`](./SDD_PLAN.md) (three phases + treesitter migration, with a progress log of measured results).
+- The 2026-08 audit (`DIAGNOSTIC.md`) and the spec-driven plan (`SDD_PLAN.md`) that drove the cleanup were removed from the tree after the merge — both live in git history (PR #30).
 - Update policy: `:Lazy update` → test → commit `lazy-lock.json`.
 - New machine: clone, open nvim, wait for lazy + Mason, then `:MasonToolsInstallSync`.
