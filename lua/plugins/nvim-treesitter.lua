@@ -55,6 +55,13 @@ return {
       group = group,
       callback = function(args)
         local lang = vim.treesitter.language.get_lang(args.match) or args.match
+        -- VimTeX owns tex highlighting: its syntax is richer than the latex
+        -- grammar, and its conceal/math-zone features need syntax groups.
+        -- (A stray master-era latex.so in the plugin dir would otherwise
+        -- activate here.)
+        if lang == 'latex' or lang == 'bibtex' then
+          return
+        end
         -- Start highlighting only when the parser is actually available
         -- (vim.treesitter.language.add returns nil/false otherwise).
         if vim.treesitter.language.add(lang) then

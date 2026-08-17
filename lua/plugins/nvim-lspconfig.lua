@@ -35,6 +35,8 @@ return {
         'vtsls',
         'eslint',
         'emmet_language_server',
+        'texlab',
+        'ltex_plus',
       },
     })
 
@@ -201,6 +203,28 @@ return {
       filetypes = {
         'html', 'css', 'scss', 'sass', 'less',
         'javascriptreact', 'typescriptreact',
+      },
+    })
+
+    -- LaTeX (texlab): completion/refs/rename for labels and citations.
+    -- Division of labor: VimTeX owns compile/view (<leader>l*), conform owns
+    -- formatting (latexindent), so texlab's build integration stays off.
+    vim.lsp.config('texlab', {
+      settings = {
+        texlab = {
+          build = { onSave = false },
+        },
+      },
+    })
+
+    -- Grammar/spell (LTeX+). Default filetypes also cover gitcommit, html,
+    -- text, org, rst, …; trimmed to prose we actually write.
+    vim.lsp.config('ltex_plus', {
+      filetypes = { 'tex', 'plaintex', 'bib', 'markdown' },
+      settings = {
+        ltex = {
+          language = 'en-US',
+        },
       },
     })
 
