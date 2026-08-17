@@ -102,6 +102,7 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 - `ignorecase` + `smartcase` search; `inccommand=split` live-previews `:substitute`.
 - **Persistent undo** (`undofile`) — undo history survives restarts.
 - `scrolloff=8` context lines; `confirm` prompts instead of failing on unsaved `:q`.
+- `timeoutlen=300` — short pending-mapping wait, so a single `<Esc>` in terminals reaches the program quickly (`<Esc><Esc>` exits terminal mode).
 - System clipboard integration (`clipboard+=unnamedplus`).
 - Splits open right/below; mouse enabled (`mouse=a`); `-` counts as part of a word.
 - **Folding via Treesitter**: `foldmethod=expr` with `v:lua.vim.treesitter.foldexpr()`, `foldlevel=20` (open by default).
@@ -229,7 +230,7 @@ Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/core/autocmds.lua` (LS
 | `<leader>to` / `<leader>tx` / `<leader>tn` / `<leader>tp` | Tab: open / close / next / prev |
 | `<leader>ts` | Move current tab into another tab as a vsplit (interactive) |
 | `<C-h/j/k/l>`, `<C-\>` | Navigate nvim splits ⇄ tmux panes |
-| `<Esc>` (terminal mode) | Back to normal mode (TermOpen autocmd; `<C-h/j/k/l>` work from terminals too) |
+| `<Esc><Esc>` (terminal mode) | Back to normal mode; a **single** `<Esc>` is passed through to the program — lazygit cancel, Claude/sidekick interrupt (TermOpen autocmd; `<C-h/j/k/l>` work from terminals too) |
 | `<leader>te` | Toggle floating terminal |
 | `<leader>qo/qf/qn/qp/ql/qc` | Quickfix: open / first / next / prev / last / close |
 | `<leader>qs` / `<leader>qS` / `<leader>qd` | Session: restore cwd / restore last / don't save on exit |
