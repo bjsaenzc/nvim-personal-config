@@ -7,7 +7,7 @@ Work covered by this setup:
 - **Backend**: Python, C, Java, Go, Rust — each with LSP, formatting, and debugging
 - **Frontend**: JavaScript, TypeScript, React (JSX/TSX), HTML/CSS — including Chrome/Node debugging
 - **Documentation**: Markdown (rendered in-buffer, browser preview, markdownlint) and LaTeX (VimTeX + Skim, texlab + LTeX+ LSP, latexindent)
-- **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim)
+- **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim), open-in-external-app (local openexternal plugin)
 
 Leader key: **`<Space>`**. Local leader: **`,`** (used by VimTeX). Press `<Space>` and pause — **which-key** shows every group.
 
@@ -89,7 +89,8 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
     │       ├── c.lua               # codelldb: launch executable / attach (C and C++)
     │       └── js.lua              # vscode-js-debug: pwa-node + pwa-chrome configs
     ├── myPlugins/
-    │   └── floatterm/lua/floatterm.lua   # Hand-written local plugin: floating terminal
+    │   ├── floatterm/lua/floatterm.lua       # Hand-written local plugin: floating terminal
+    │   └── openexternal/lua/openexternal.lua # Hand-written local plugin: open in external macOS apps
     └── plugins/                    # One lazy.nvim spec per plugin (auto-loaded)
 ```
 
@@ -144,6 +145,7 @@ Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nu
 | `refjump.nvim` | `<leader>}` / `<leader>{` jump between LSP references; `]r`/`[r` repeatable via demicolon. Loads on `LspAttach`. |
 | `vim-tmux-navigator` | `<C-h/j/k/l>` and `<C-\>` navigate seamlessly across nvim splits **and** tmux panes. |
 | **floatterm** (local, `lua/myPlugins/floatterm/`) | Hand-written floating terminal: `:FloatTerm` / `<leader>te` toggles a 90%×90% float; shell session persists across toggles. |
+| **openexternal** (local, `lua/myPlugins/openexternal/`) | Hand-written, macOS-only: opens the current buffer — or the entry under the cursor in nvim-tree / neo-tree / oil / mini.files / netrw — in an external app. `:OpenIn code\|skim\|preview\|default\|finder` plus `<leader>o*` keymaps (see below). For PDF-producing sources (LaTeX, Markdown, Typst, …) it hands Skim/Preview the **compiled PDF** (vimtex output path when available, else searches `build/`, `out/`, `target/`, …). VS Code opens at the cursor position when the `code` CLI is installed. |
 
 ### LSP / Completion / Formatting / Diagnostics
 
@@ -250,6 +252,21 @@ Leader = `<Space>`. Sources: `lua/core/keymaps.lua`, `lua/core/autocmds.lua` (LS
 | `<leader>ee` / `<leader>er` / `<leader>ef` | nvim-tree: toggle / focus / reveal current file |
 | `<leader>ha`, `<leader>hh`, `<leader>h1..h9` | Harpoon: add, menu, jump to mark *n* |
 | `<leader>sb` | Telescope BibTeX citation search |
+
+### Open in External App (openexternal, macOS)
+
+Acts on the current file buffer, or on the entry under the cursor inside an explorer (nvim-tree, neo-tree, oil, mini.files, netrw). Modified buffers are written first.
+
+| Key | Action |
+|---|---|
+| `<leader>oc` | Open in **VS Code** at the cursor position (any buffer; directories open as a workspace) |
+| `<leader>oo` | Open in the **macOS default app** (any buffer) |
+| `<leader>of` | **Reveal in Finder** (any buffer) |
+| `<leader>os` | Open in **Skim** (buffer-local: PDF/image buffers, PDF-producing filetypes, explorers) |
+| `<leader>op` | Open in **Preview** (same buffers as `<leader>os`) |
+| `:OpenIn [code\|skim\|preview\|default\|finder]` | Same actions as a command (tab-completes; no argument = default app) |
+
+For LaTeX/Markdown/Typst-style sources, `<leader>os`/`<leader>op` open the **compiled PDF**, not the source — vimtex's known output path first, then `build/`, `out/`, `output/`, `_build/`, `target/`, `.texout/` next to the file.
 
 ### LSP / Diagnostics (buffer-local, only where a server is attached)
 
@@ -404,6 +421,7 @@ Ghostty implements the kitty graphics protocol, which is why `image.nvim` uses `
 - **snacks.picker is disabled** (telescope is the picker); the `<leader>gh*` GitHub keys still work because explicit `Snacks.picker.*` calls load the module on demand.
 - **gitgraph deliberately avoids `--all`** to keep Claude Code worktree/stash refs out of the graph.
 - **Kulala default mappings are disabled**; only the custom `<leader>R…` set exists.
+- **openexternal is macOS-only** (`open`/`open -a`) and its Skim/Preview maps (`<leader>os`/`<leader>op`) are **buffer-local** — they only exist in PDF/image buffers, PDF-producing filetypes, and explorer buffers. `<leader>oc`/`<leader>oo`/`<leader>of` are global. Cursor-position opening in VS Code requires the `code` shell command (Cmd+Shift+P → "Install 'code' command in PATH").
 - **Prefix conventions**: `<leader>h*` harpoon vs `<leader>H*` git hunks; `<leader>n*` tests vs `<leader>N*` package.json — capitals disambiguate deliberately.
 - **VimTeX owns tex highlighting**: the treesitter FileType autocmd returns early for `latex`/`bibtex`. If LaTeX highlighting ever looks broken, check that no stray `latex.so` parser is being picked up (`:lua =vim.api.nvim_get_runtime_file('parser/latex*', true)` should be empty) — see the migration section below.
 - **VimTeX on nightly builds**: its version gate wants stable ≥ 0.12.4 and rejects `0.x-dev` nightlies (silently disabling *everything* — no commands, no maps, no syntax). The spec sets `vim.g.vimtex_version_check = 0` to bypass it.
