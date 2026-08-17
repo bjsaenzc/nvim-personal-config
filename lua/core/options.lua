@@ -29,6 +29,10 @@ opt.inccommand = "split"
 -- Ask instead of failing on :q with unsaved changes
 opt.confirm = true
 
+-- Pending-mapping wait. Kept short so a single <Esc> in terminals reaches the
+-- program quickly (double-<Esc> exits terminal mode; see core/autocmds.lua).
+opt.timeoutlen = 300
+
 -- Search Settings
 opt.ignorecase = true
 opt.smartcase = true
