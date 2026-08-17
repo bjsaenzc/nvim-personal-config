@@ -3,6 +3,11 @@ return {
     "lervag/vimtex",
     lazy = false, -- VimTeX is best loaded globally for filetype detection
     init = function()
+      -- The version gate wants stable >= 0.12.4, which a 0.12.0-dev nightly
+      -- fails despite being newer; without this VimTeX aborts before defining
+      -- any command or mapping (:h vimtex_version_check).
+      vim.g.vimtex_version_check = 0
+
       -- Use Zathura for a lightweight, Synctex-compatible experience
       -- vim.g.vimtex_view_method = "zathura"
       vim.g.vimtex_view_method = 'skim'
