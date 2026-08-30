@@ -32,7 +32,7 @@ Startup is fully lazy-loaded: ~58 ms with 13 of 63 plugins loaded at startup (me
 | **gh CLI** | Snacks GitHub pickers |
 | **ImageMagick / luarocks (magick)** | image.nvim (lazy builds this via `hererocks`) |
 | **mermaid-cli (`mmdc`)** | diagram.nvim mermaid rendering |
-| **tmux (+ vim-tmux-navigator tmux plugin)** | Seamless `<C-h/j/k/l>` pane navigation, image passthrough |
+| **tmux + TPM (vim-tmux-navigator tmux plugin)** | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux) |
 | **cursor-agent / claude CLI** (optional) | sidekick.nvim AI tools |
 
 **Everything else installs itself.** Two Mason mechanisms guarantee binaries on a fresh machine:
@@ -199,8 +199,8 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 | `render-markdown.nvim` | In-buffer Markdown rendering (`ft = markdown`). |
 | `markdown-preview.nvim` | Live browser preview: `:MarkdownPreviewToggle`. |
 | `render-latex.nvim` | Renders LaTeX math inside Markdown buffers. |
-| `image.nvim` | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. |
-| `diagram.nvim` | Mermaid diagrams in Markdown via image.nvim. |
+| `image.nvim` | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. Images scale to the window (`max_width/height_window_percentage = 90`) instead of fixed cell limits. |
+| `diagram.nvim` | Mermaid diagrams in Markdown via image.nvim, **rendered on demand**: in-buffer auto-render is disabled (`events.render_buffer = {}`; renders clear on `BufLeave`), and `<leader>KK` opens the diagram under the cursor **in a new tab**. Mermaid renderer: dark theme, transparent background, 1600×1200. |
 | `package-info.nvim` (+ `nui.nvim`) | Inline dependency versions in `package.json`. `<leader>Ns` show, `<leader>Nu` update, `<leader>Nd` delete, `<leader>Ni` install, `<leader>Nc` change version. |
 | `kulala.nvim` | REST client for `.http`/`.rest` files. Default maps disabled; custom `<leader>R…` set. |
 
@@ -331,6 +331,13 @@ For LaTeX/Markdown/Typst-style sources, `<leader>os`/`<leader>op` open the **com
 | `<leader>Rp` / `<leader>Rn` | Jump to prev / next request |
 | `<leader>Rc` / `<leader>Rb` / `<leader>Rq` | Copy as cURL / scratchpad / close |
 
+### Markdown (diagram.nvim, markdown buffers)
+
+| Key | Action |
+|---|---|
+| `<leader>KK` | Render the mermaid diagram under the cursor and open it in a new tab (auto-render in-buffer is disabled) |
+| `<leader>KO` | Render the Mermaid diagram under the cursor as a high-quality PNG (4×, 2400×1800 viewport) and open it in the system viewer |
+
 ### LaTeX (buffer-local in `.tex` files — `ftplugin/tex.lua`)
 
 | Key | Action |
@@ -387,12 +394,27 @@ Everything runs in **Ghostty → tmux → Neovim**.
 ```tmux
 set -g mouse on
 set -g allow-passthrough on
+set -g visual-activity off
+set -g history-limit 50000
+set -as terminal-features ',xterm-ghostty:RGB'
+set-option -g focus-events on
+
+# Smart pane switching with awareness of Vim splits.
+# See: https://github.com/christoomey/vim-tmux-navigator
+set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'christoomey/vim-tmux-navigator'
+
+# Keep this as the LAST line of the file
+run '~/.tmux/plugins/tpm/tpm'
 ```
 
 - `mouse on` — mouse scrolling/pane resize in tmux.
 - `allow-passthrough on` — **required** for image.nvim's kitty-graphics escapes to reach Ghostty through tmux (inline images/mermaid in Markdown).
-- The `vim-tmux-navigator` tmux plugin pairs with the Neovim plugin so `<C-h/j/k/l>` moves between tmux panes and nvim splits transparently. Note: the `@plugin` line is TPM syntax, but no TPM bootstrap (`run '~/.tmux/plugins/tpm/tpm'`) appears in the file — if the tmux-side bindings don't work, install TPM or add the bindings manually.
+- `terminal-features ',xterm-ghostty:RGB'` — true color through tmux (Ghostty sets `TERM=xterm-ghostty`); without it, `termguicolors` themes look washed out.
+- `history-limit 50000` — scrollback (tmux default is only 2000 lines).
+- `focus-events on` — forwards terminal focus to Neovim (gitsigns refresh, autoread checks).
+- Plugins are managed by **TPM** (`git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm`, then `prefix + I` to install). The `vim-tmux-navigator` tmux plugin pairs with the Neovim plugin so `<C-h/j/k/l>` moves between tmux panes and nvim splits transparently — without the TPM `run` line at the bottom, the `@plugin` entries are inert and the tmux-side bindings won't exist.
+- **Not pinned** (tmux ≥ 3.5 defaults are already right): `escape-time 10` and `default-terminal "tmux-256color"`. On machines with older tmux, set both explicitly — pre-3.5 defaulted `escape-time` to 500 ms, which adds half a second of lag to every `<Esc>` in Neovim and TUI apps (compounding the `timeoutlen=300` single-Esc passthrough).
 
 **Ghostty** (`~/Library/Application Support/com.mitchellh.ghostty/config`):
 
