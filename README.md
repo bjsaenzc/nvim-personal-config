@@ -70,7 +70,7 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 ├── init.lua                        # Bootstrap: leaders → options → lazy.nvim → keymaps/autocmds
 ├── lazy-lock.json                  # Lockfile (tracked — pins every plugin commit)
 ├── ftplugin/
-│   ├── markdown.lua                # Buffer-local: wrap, spell (en_us + es), j/k on wrapped lines
+│   ├── markdown.lua                # Buffer-local: wrap, spelllang (en_us + es; toggle <leader>ms), j/k on wrapped lines
 │   ├── java.lua                    # Starts/attaches jdtls with a per-project workspace
 │   └── tex.lua                     # Buffer-local <leader>l* VimTeX mirrors + which-key groups
 ├── spell/
@@ -196,7 +196,7 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 | `rustaceanvim` (**v6**)                                          | Rust IDE layer (rust-analyzer is _not_ configured via lspconfig). Buffer-local keys: `<leader>ca` code action, `<leader>dr` debuggables, `<leader>rx` runnables, `K` hover actions. Format-on-save via rust-analyzer; clippy on save (modern `check` config shape); DAP via auto-discovered Mason codelldb.                                                                                       |
 | `crates.nvim`                                                    | Crate versions inside `Cargo.toml`.                                                                                                                                                                                                                                                                                                                                                               |
 | `neotest` (+ `neotest-python`, `neotest-jest`, `neotest-golang`) | Test runner: `<leader>nt` nearest, `<leader>nf` file, `<leader>nd` debug nearest (DAP), `<leader>ns` summary, `<leader>no` output, `<leader>nO` panel, `<leader>nl` re-run last.                                                                                                                                                                                                                  |
-| `render-markdown.nvim`                                           | In-buffer Markdown rendering (`ft = markdown`).                                                                                                                                                                                                                                                                                                                                                   |
+| `render-markdown.nvim`                                           | In-buffer Markdown rendering (`ft = markdown`): inline heading icons with block backgrounds and bordered sections, thin-bordered code blocks, rounded table corners, quote markers repeated on wrapped lines, blink.cmp checkbox/callout completions. Its own latex module is **disabled** (render-latex.nvim owns that). `<leader>mm` toggles rendering per buffer; `<leader>ms` toggles spell.     |
 | `markdown-preview.nvim`                                          | Live browser preview: `:MarkdownPreviewToggle`.                                                                                                                                                                                                                                                                                                                                                   |
 | `render-latex.nvim`                                              | Renders LaTeX math inside Markdown buffers.                                                                                                                                                                                                                                                                                                                                                       |
 | `image.nvim`                                                     | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. Images scale to the window (`max_width/height_window_percentage = 90`) instead of fixed cell limits.                                                                                                                                                                                     |
@@ -331,10 +331,12 @@ For LaTeX/Markdown/Typst-style sources, `<leader>os`/`<leader>op` open the **com
 | `<leader>Rp` / `<leader>Rn`                | Jump to prev / next request                   |
 | `<leader>Rc` / `<leader>Rb` / `<leader>Rq` | Copy as cURL / scratchpad / close             |
 
-### Markdown (diagram.nvim, markdown buffers)
+### Markdown (markdown buffers)
 
 | Key          | Action                                                                                                                      |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `<leader>mm` | Toggle in-buffer rendering (render-markdown.nvim, current buffer)                                                           |
+| `<leader>ms` | Toggle spell check (en_us + es; **off by default** so reading isn't interrupted)                                            |
 | `<leader>KK` | Render the mermaid diagram under the cursor and open it in a new tab (auto-render in-buffer is disabled)                    |
 | `<leader>KO` | Render the Mermaid diagram under the cursor as a high-quality PNG (4×, 2400×1800 viewport) and open it in the system viewer |
 
@@ -430,7 +432,7 @@ Ghostty implements the kitty graphics protocol, which is why `image.nvim` uses `
 
 ## Markdown Spell-check Languages
 
-Markdown buffers enable Neovim's built-in spell checker with English and Spanish (`en_us,es`). Spanish is included in this repository under `spell/`; Neovim supplies the English fallback dictionary (`en`) from its runtime. Misspellings are underlined, and `z=` shows replacement suggestions.
+Markdown buffers configure Neovim's built-in spell checker with English and Spanish (`en_us,es`), but spell is **off by default** so misspelling underlines don't interrupt reading — toggle it with `<leader>ms` (keymap lives in `lua/plugins/nvim-rendermarkdown.lua`; the `spelllang` dictionaries in `ftplugin/markdown.lua`). Spanish is included in this repository under `spell/`; Neovim supplies the English fallback dictionary (`en`) from its runtime. When enabled, misspellings are underlined and `z=` shows replacement suggestions.
 
 To add another language, first add its code to `ftplugin/markdown.lua`, then open a Markdown buffer and tell Neovim to load it. For example, French:
 
@@ -458,7 +460,7 @@ This affects only Neovim's spelling highlights and `z=` suggestions. `ltex_plus`
 - **`.vscode/launch.json` is honored** and re-read on `:cd` — types `python`/`debugpy`, `go`, `lldb`/`codelldb`, `node`/`pwa-node`, `chrome`/`pwa-chrome`.
 - **jdtls needs Java 17+ on PATH** and is slow on first open of a project (it indexes into a per-project workspace under `stdpath("data")/jdtls-workspaces/`).
 - **Harpoon v2 storage**: marks made with the old v1 (pre-migration) are not carried over — re-add per project.
-- **Markdown buffers change navigation**: `ftplugin/markdown.lua` remaps `j`/`k` to `gj`/`gk` and enables **English + Spanish** spell — strictly buffer-local.
+- **Markdown buffers change navigation**: `ftplugin/markdown.lua` remaps `j`/`k` to `gj`/`gk` and configures **English + Spanish** spell dictionaries (spell itself is off until `<leader>ms`) — strictly buffer-local.
 - **LSP keymaps only exist where a server is attached** (LspAttach autocmd) — in a plain scratch buffer, `<leader>gd` does nothing rather than erroring.
 - **snacks.picker is disabled** (telescope is the picker); the `<leader>gh*` GitHub keys still work because explicit `Snacks.picker.*` calls load the module on demand.
 - **gitgraph deliberately avoids `--all`** to keep Claude Code worktree/stash refs out of the graph.
