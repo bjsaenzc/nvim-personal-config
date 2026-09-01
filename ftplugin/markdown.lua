@@ -7,6 +7,6 @@ vim.opt_local.linebreak = true   -- Line break on whole words
 vim.keymap.set("n", "j", "gj", { buffer = true })
 vim.keymap.set("n", "k", "gk", { buffer = true })
 
--- Spell check
+-- Spell check: dictionaries only — spell itself starts OFF so reading isn't
+-- interrupted. Toggle with <leader>ms (lua/plugins/nvim-rendermarkdown.lua).
 vim.opt_local.spelllang = { "en_us", "es" }
-vim.opt_local.spell = true
