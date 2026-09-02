@@ -86,12 +86,14 @@ return {
 
 				local result = require("diagram.renderers.mermaid").render(diagram.source, {
 					background = "transparent",
-					theme = "dark",
+					theme = "neutral",
 					scale = 4,
 					width = 2400,
 					height = 1800,
 				})
-				if not result then return end
+				if not result then
+					return
+				end
 
 				local open_image = function()
 					if vim.fn.filereadable(result.file_path) == 1 then
@@ -107,12 +109,18 @@ return {
 				end
 
 				local timer = (vim.uv or vim.loop).new_timer()
-				timer:start(0, 100, vim.schedule_wrap(function()
-					if vim.fn.jobwait({ result.job_id }, 0)[1] == -1 then return end
-					timer:stop()
-					timer:close()
-					open_image()
-				end))
+				timer:start(
+					0,
+					100,
+					vim.schedule_wrap(function()
+						if vim.fn.jobwait({ result.job_id }, 0)[1] == -1 then
+							return
+						end
+						timer:stop()
+						timer:close()
+						open_image()
+					end)
+				)
 			end,
 			mode = "n",
 			ft = "markdown",
