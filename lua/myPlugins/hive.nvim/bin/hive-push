@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Push one hive event into a running neovim. Set: export HIVE_ON_EVENT=hive-push
+# The plugin writes v:servername into <root>/nvim.server when it starts.
+root="${HIVE_ROOT:-$PWD/.hive}"
+srv=$(head -1 "$root/nvim.server" 2>/dev/null) || exit 0
+[ -n "$srv" ] || exit 0
+# vimscript single-quoted string: only ' needs escaping, as ''
+root=$(cd "$root" 2>/dev/null && pwd) || exit 0
+escaped_root=${root//\'/\'\'}
+payload=${1//\'/\'\'}
+nvim --server "$srv" --remote-expr \
+  "luaeval(\"require'hive'.on_event_json(_A[1], _A[2])\", ['$payload', '$escaped_root'])" >/dev/null 2>&1 || true
