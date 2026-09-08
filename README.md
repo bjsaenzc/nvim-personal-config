@@ -7,33 +7,34 @@ Work covered by this setup:
 - **Backend**: Python, C, Java, Go, Rust — each with LSP, formatting, and debugging
 - **Frontend**: JavaScript, TypeScript, React (JSX/TSX), HTML/CSS — including Chrome/Node debugging
 - **Documentation**: Markdown (rendered in-buffer, browser preview, markdownlint) and LaTeX (VimTeX + Skim, texlab + LTeX+ LSP, latexindent)
-- **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim), open-in-external-app (local openexternal plugin)
+- **Extras**: REST client (Kulala), test runner (neotest), sessions (persistence), project-wide search & replace (grug-far), Git tooling (gitsigns, fugitive, diffview, gitgraph, snacks gh/lazygit), AI CLI integration (sidekick.nvim), multi-agent task orchestration (local **Hive** plugin: tmux-backed worker agents driven from a Neovim dashboard), open-in-external-app (local openexternal plugin)
 
 Leader key: **`<Space>`**. Local leader: **`,`** (used by VimTeX). Press `<Space>` and pause — **which-key** shows every group.
 
-Startup is fully lazy-loaded: ~58 ms with 13 of 63 plugins loaded at startup (measured; the rest load on demand).
+Startup is fully lazy-loaded: ~58 ms with 13 of 64 plugins loaded at startup (measured; the rest load on demand).
 
 ---
 
 ## Requirements
 
-| Tool                                                               | Needed by                                                                                                       |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| **Neovim ≥ 0.11** (currently run on 0.12-dev nightly)              | `vim.lsp.config()` API, `vim.diagnostic.jump`, treesitter `main` branch, `vim.o.winborder`                      |
-| **git**                                                            | lazy.nvim bootstrap, all git plugins                                                                            |
-| **A Nerd Font** (Ghostty is set to _JetBrainsMono Nerd Font Mono_) | nvim-web-devicons, diagnostic signs, gitgraph symbols, blink.cmp `nerd_font_variant = 'mono'`                   |
-| **make + a C compiler**                                            | `telescope-fzf-native.nvim`, treesitter parser compilation                                                      |
-| **node / npm**                                                     | markdown-preview.nvim (`cd app && npm install`), package-info.nvim, js-debug-adapter, most Mason servers        |
-| **ripgrep**                                                        | Telescope `live_grep`, grug-far                                                                                 |
-| **Java 17+ runtime on PATH**                                       | jdtls (Java LSP) — Mason installs jdtls itself, but not the JRE                                                 |
-| **rust-analyzer + cargo + clippy**                                 | rustaceanvim (rust-analyzer is _not_ Mason-managed here)                                                        |
-| **latexmk + a TeX distribution + Skim.app**                        | VimTeX (compile + forward search on macOS)                                                                      |
-| **lazygit**                                                        | Snacks lazygit (`<leader>gG`)                                                                                   |
-| **gh CLI**                                                         | Snacks GitHub pickers                                                                                           |
-| **ImageMagick / luarocks (magick)**                                | image.nvim (lazy builds this via `hererocks`)                                                                   |
-| **mermaid-cli (`mmdc`)**                                           | diagram.nvim mermaid rendering                                                                                  |
-| **tmux ≥ 3.3**                                                    | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux) |
-| **cursor-agent / claude CLI** (optional)                           | sidekick.nvim AI tools                                                                                          |
+| Tool                                                               | Needed by                                                                                                                                       |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Neovim ≥ 0.11** (currently run on 0.12-dev nightly)              | `vim.lsp.config()` API, `vim.diagnostic.jump`, treesitter `main` branch, `vim.o.winborder`                                                      |
+| **git**                                                            | lazy.nvim bootstrap, all git plugins                                                                                                            |
+| **A Nerd Font** (Ghostty is set to _JetBrainsMono Nerd Font Mono_) | nvim-web-devicons, diagnostic signs, gitgraph symbols, blink.cmp `nerd_font_variant = 'mono'`                                                   |
+| **make + a C compiler**                                            | `telescope-fzf-native.nvim`, treesitter parser compilation                                                                                      |
+| **node / npm**                                                     | markdown-preview.nvim (`cd app && npm install`), package-info.nvim, js-debug-adapter, most Mason servers                                        |
+| **ripgrep**                                                        | Telescope `live_grep`, grug-far                                                                                                                 |
+| **Java 17+ runtime on PATH**                                       | jdtls (Java LSP) — Mason installs jdtls itself, but not the JRE                                                                                 |
+| **rust-analyzer + cargo + clippy**                                 | rustaceanvim (rust-analyzer is _not_ Mason-managed here)                                                                                        |
+| **latexmk + a TeX distribution + Skim.app**                        | VimTeX (compile + forward search on macOS)                                                                                                      |
+| **lazygit**                                                        | Snacks lazygit (`<leader>gG`)                                                                                                                   |
+| **gh CLI**                                                         | Snacks GitHub pickers                                                                                                                           |
+| **ImageMagick / luarocks (magick)**                                | image.nvim (lazy builds this via `hererocks`)                                                                                                   |
+| **mermaid-cli (`mmdc`)**                                           | diagram.nvim mermaid rendering                                                                                                                  |
+| **tmux ≥ 3.3**                                                     | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux); Hive control + worker sessions |
+| **jq** + **GNU coreutils `timeout`**                               | Hive backend (`bin/hive`): jq for every blackboard read/write, `timeout` for the per-task wall clock (macOS: `brew install coreutils`)          |
+| **cursor-agent / claude CLI** (optional)                           | sidekick.nvim AI tools; Hive providers (`claude`, `codex`, `gemini`, `aider`, `cursor-agent` — the `mock` provider needs none)                  |
 
 **Everything else installs itself.** Two Mason mechanisms guarantee binaries on a fresh machine:
 
@@ -94,7 +95,16 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
     │       └── js.lua              # vscode-js-debug: pwa-node + pwa-chrome configs
     ├── myPlugins/
     │   ├── floatterm/lua/floatterm.lua       # Hand-written local plugin: floating terminal
-    │   └── openexternal/lua/openexternal.lua # Hand-written local plugin: open in external macOS apps
+    │   ├── openexternal/lua/openexternal.lua # Hand-written local plugin: open in external macOS apps
+    │   └── hive.nvim/                        # Hand-written local plugin: multi-agent orchestrator (tmux + blackboard)
+    │       ├── bin/hive                      # Bash control plane (2.1.0-dev): init/up/add/dispatch/loop/events/…
+    │       ├── bin/hive-push                 # Optional push hook: forwards one event into the running nvim
+    │       ├── lua/hive/init.lua             # setup(), config, async/sync CLI runners, public API
+    │       ├── lua/hive/state.lua            # Snapshot cache, ordered event cursor, follower + gap recovery
+    │       ├── lua/hive/ui.lua               # Dashboard, picker, results, tail/peek, task form (snacks.nvim)
+    │       ├── lua/hive/health.lua           # :checkhealth hive
+    │       ├── plugin/hive.lua               # :Hive* user commands with task-id completion
+    │       └── doc/hive.txt                  # :help hive
     └── plugins/                    # One lazy.nvim spec per plugin (auto-loaded)
 ```
 
@@ -121,15 +131,15 @@ Names as they appear in `lazy-lock.json`. Support libraries (`plenary.nvim`, `nu
 
 ### UI / Appearance
 
-| Plugin                             | Purpose / configuration here                                                                                                                                                                                                                                                                                                                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nightfox.nvim`                    | **Active colorscheme: `carbonfox`**. Italic comments, terminal colors on, no transparency. `colorscheme.lua` keeps commented-out alternatives (kanagawa custom palette, tokyonight, catppuccin, …) ready to swap in.                                                                                                                                                                                            |
-| `lualine.nvim`                     | Statusline, `theme = "auto"` (follows the colorscheme); filename shown as `parent/filename` (`path = 4`). `VeryLazy`.                                                                                                                                                                                                                                                                                           |
-| `dropbar.nvim`                     | Winbar breadcrumbs (native winbar + LSP/treesitter sources). Replaced the unmaintained barbecue.                                                                                                                                                                                                                                                                                                                |
-| `nvim-colorizer.lua` (NvChad fork) | Inline color highlighting for hex/rgb()/hsl()/Tailwind/Sass.                                                                                                                                                                                                                                                                                                                                                    |
-| `snacks.nvim`                      | Multi-tool: dashboard, **indent guides** (sole provider), input, notifier, quickfile, scroll, statuscolumn, word highlights, **gh** and **lazygit**. `picker` module is **disabled** — telescope is the picker — but the explicit gh keys below still work. Keys: `<leader>ghi/ghI` issues (open/all), `<leader>ghp/ghP` PRs (open/all), `<leader>Gf` git files, `<leader>gG` lazygit, `<leader>Gs` git status. |
-| `which-key.nvim`                   | Keymap discoverability: press `<leader>` and pause for named groups; `<leader>?` shows buffer-local maps. Every mapping carries a `desc`.                                                                                                                                                                                                                                                                       |
-| `fidget.nvim`                      | LSP progress spinner (dependency of lspconfig).                                                                                                                                                                                                                                                                                                                                                                 |
+| Plugin                             | Purpose / configuration here                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nightfox.nvim`                    | **Active colorscheme: `carbonfox`**. Italic comments, terminal colors on, no transparency. `colorscheme.lua` keeps commented-out alternatives (kanagawa custom palette, tokyonight, catppuccin, …) ready to swap in.                                                                                                                                                                                                                                     |
+| `lualine.nvim`                     | Statusline, `theme = "auto"` (follows the colorscheme); filename shown as `parent/filename` (`path = 4`). `VeryLazy`.                                                                                                                                                                                                                                                                                                                                    |
+| `dropbar.nvim`                     | Winbar breadcrumbs (native winbar + LSP/treesitter sources). Replaced the unmaintained barbecue.                                                                                                                                                                                                                                                                                                                                                         |
+| `nvim-colorizer.lua` (NvChad fork) | Inline color highlighting for hex/rgb()/hsl()/Tailwind/Sass.                                                                                                                                                                                                                                                                                                                                                                                             |
+| `snacks.nvim`                      | Multi-tool: dashboard, **indent guides** (sole provider), input, notifier, quickfile, scroll, statuscolumn, word highlights, **gh** and **lazygit**. `picker` module is **enabled** but telescope stays the day-to-day finder (`<leader>f*`); `Snacks.picker` serves the gh keys and Hive's pickers. Keys: `<leader>ghi/ghI` issues (open/all), `<leader>ghp/ghP` PRs (open/all), `<leader>Gf` git files, `<leader>gG` lazygit, `<leader>Gs` git status. |
+| `which-key.nvim`                   | Keymap discoverability: press `<leader>` and pause for named groups; `<leader>?` shows buffer-local maps. Every mapping carries a `desc`.                                                                                                                                                                                                                                                                                                                |
+| `fidget.nvim`                      | LSP progress spinner (dependency of lspconfig).                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ### Navigation / Editing
 
@@ -200,7 +210,7 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 | `rustaceanvim` (**v6**)                                          | Rust IDE layer (rust-analyzer is _not_ configured via lspconfig). Buffer-local keys: `<leader>ca` code action, `<leader>dr` debuggables, `<leader>rx` runnables, `K` hover actions. Format-on-save via rust-analyzer; clippy on save (modern `check` config shape); DAP via auto-discovered Mason codelldb.                                                                                       |
 | `crates.nvim`                                                    | Crate versions inside `Cargo.toml`.                                                                                                                                                                                                                                                                                                                                                               |
 | `neotest` (+ `neotest-python`, `neotest-jest`, `neotest-golang`) | Test runner: `<leader>nt` nearest, `<leader>nf` file, `<leader>nd` debug nearest (DAP), `<leader>ns` summary, `<leader>no` output, `<leader>nO` panel, `<leader>nl` re-run last.                                                                                                                                                                                                                  |
-| `render-markdown.nvim`                                           | In-buffer Markdown rendering (`ft = markdown`): inline heading icons with block backgrounds and bordered sections, thin-bordered code blocks, rounded table corners, quote markers repeated on wrapped lines, blink.cmp checkbox/callout completions. Its own latex module is **disabled** (render-latex.nvim owns that). `<leader>mm` toggles rendering per buffer; `<leader>ms` toggles spell.     |
+| `render-markdown.nvim`                                           | In-buffer Markdown rendering (`ft = markdown`): inline heading icons with block backgrounds and bordered sections, thin-bordered code blocks, rounded table corners, quote markers repeated on wrapped lines, blink.cmp checkbox/callout completions. Its own latex module is **disabled** (render-latex.nvim owns that). `<leader>mm` toggles rendering per buffer; `<leader>ms` toggles spell.  |
 | `markdown-preview.nvim`                                          | Live browser preview: `:MarkdownPreviewToggle`.                                                                                                                                                                                                                                                                                                                                                   |
 | `render-latex.nvim`                                              | Renders LaTeX math inside Markdown buffers.                                                                                                                                                                                                                                                                                                                                                       |
 | `image.nvim`                                                     | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. Images scale to the window (`max_width/height_window_percentage = 90`) instead of fixed cell limits.                                                                                                                                                                                     |
@@ -210,9 +220,10 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 
 ### AI
 
-| Plugin          | Purpose / configuration here                                                                                                                                                                                                                                                                                                                                                                 |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidekick.nvim` | Drives AI CLIs (Claude, cursor-agent, …). `<C-.>` toggle from any mode, `<leader>aa` toggle, `<leader>ac` open **Claude**, `<leader>as` select tool, `<leader>ad` detach, `<leader>at/af/av` send this/file/selection, `<leader>ap` prompt picker. Custom prompts: `python_tests`, `module_docstring`, `update_changelog`, `pr_documentation` (Latin-American Spanish PR docs vs `develop`). |
+| Plugin                                            | Purpose / configuration here                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidekick.nvim`                                   | Drives AI CLIs (Claude, cursor-agent, …). `<C-.>` toggle from any mode, `<leader>aa` toggle, `<leader>ac` open **Claude**, `<leader>as` select tool, `<leader>ad` detach, `<leader>at/af/av` send this/file/selection, `<leader>ap` prompt picker. Custom prompts: `python_tests`, `module_docstring`, `update_changelog`, `pr_documentation` (Latin-American Spanish PR docs vs `develop`).                                                                                                                                                                                                                           |
+| **hive.nvim** (local, `lua/myPlugins/hive.nvim/`) | Hand-written multi-agent orchestrator. Tasks are queued on a file blackboard (`.hive/`), a Bash scheduler runs each one in its own tmux session (`agent-<id>`) through a provider CLI (`claude`, `codex`, `gemini`, `aider`, `cursor-agent`, or the token-free `mock`), and a sequenced event journal streams back into Neovim. `<leader>Hh` dashboard, `<leader>Hp` picker, `<leader>Ha` new-task form (visual selection pre-fills the prompt), `<leader>Hr` results. Built on snacks.nvim (`win`, `picker`, `terminal`, `notify`); lazy on its commands/keys. Full write-up: [Hive](#hive-multi-agent-orchestrator). |
 
 ---
 
@@ -369,6 +380,20 @@ VimTeX text objects/motions also apply: `ic`/`ac` commands, `ie`/`ae` environmen
 | `<leader>at` / `<leader>af` / `<leader>av` | Send this / file / visual selection                              |
 | `<leader>ap`                               | Prompt picker (includes the Spanish `pr_documentation` template) |
 
+### Hive (multi-agent orchestrator)
+
+| Key / command                                                           | Action                                                                                                                                   |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `<leader>Hh` / `:Hive`                                                  | Dashboard: `⏎` go to agent's tmux session, `t` tail, `p` peek, `x` kill+requeue, `a` add, `P` pause, `r` refresh, `R` results, `q` close |
+| `<leader>Hp` / `:HivePick`                                              | Task picker: `⏎` go, `<C-t>` tail, `<C-p>` peek, `<C-x>` kill, `<C-r>` open report                                                       |
+| `<leader>Ha` (n, v) / `:[range]HiveAdd`                                 | New-task form; visual selection / range pre-fills the prompt. `:w` or `<C-s>` queues, `<Esc>` closes                                     |
+| `<leader>Hr` / `:HiveResults`                                           | Pick a task report (`.hive/results/<id>.md`)                                                                                             |
+| `:HiveTail [id]` / `:HivePeek [id]` / `:HiveGo [id]` / `:HiveKill [id]` | Follow transcript in a split / preview live screen / switch tmux client / cancel + requeue                                               |
+| `:HivePause` / `:HiveRefresh`                                           | Toggle scheduler pause / force a snapshot                                                                                                |
+| `:checkhealth hive`, `:help hive`                                       | Dependency check, plugin manual                                                                                                          |
+
+`<leader>Hp` and `<leader>Hr` are shadowed by gitsigns' buffer-local hunk maps in git-tracked buffers — see [Nuances](#nuances--gotchas).
+
 ---
 
 ## Language Support Summary
@@ -433,6 +458,191 @@ Ghostty implements the kitty graphics protocol, which is why `image.nvim` uses `
 
 ---
 
+## Hive: Multi-Agent Orchestrator
+
+**Hive** is a hand-written local plugin (`lua/myPlugins/hive.nvim/`) that turns tmux into a small hierarchical multi-agent control plane and gives it a Neovim front-end. You (or an orchestrating agent) queue tasks on a file **blackboard**; a scheduler starts each task in its **own tmux session** running an agent CLI; results and a sequenced **event journal** flow back into Neovim as a dashboard, a picker, toasts and a `User HiveEvent` autocmd.
+
+```text
+                 ┌──────────────── Neovim (hive.nvim) ────────────────┐
+                 │ :Hive dashboard · :HivePick · :HiveAdd form · toasts │
+                 │ polls `hive json` every 3 s · follows `hive events` │
+                 └──────────────┬───────────────────────▲──────────────┘
+                                │ bin/hive (bash + jq)  │ events.jsonl / hive-push
+                                ▼                       │
+   ┌────────────────────── blackboard  .hive/ ──────────┴───────────────┐
+   │ tasks/{ready,active,done,failed}/T-001.json   results/T-001.md      │
+   │ tasks/prompts/T-001.md (+ .rendered.md)       logs/T-001.log        │
+   │ context/{MISSION,DECISIONS,INTERFACES}.md     events.jsonl  seq     │
+   └──────────────┬──────────────────────────────────────────────────────┘
+                  │ `hive loop` (tmux session "hive", window "board") every 3 s:
+                  │ dispatch ready→active (WIP ≤ 3, deps done, priority asc) · reap orphans
+                  ▼
+   tmux session agent-T-001 ──▶ hive exec ──▶ timeout N  claude -p "<rendered prompt>" …
+   tmux session agent-T-002 ──▶ hive exec ──▶ timeout N  codex exec …
+```
+
+Two halves, both shipped in this repo:
+
+| Piece                           | What it is                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bin/hive` (Bash, `2.1.0-dev`)  | The control plane. Provider-agnostic, no daemon: state is files under `.hive/`, concurrency is tmux, locking is atomic `mkdir` (works on macOS bash 3.2). Machine-readable surface for the plugin: `hive json` (locked snapshot), `hive events --since N --follow` (JSON lines), typed exit codes (`0` ok, `1` generic, `2` not found, `3` wrong state, `4` environment). Public domain / CC0. |
+| `bin/hive-push`                 | Optional push hook. When the scheduler runs with `HIVE_ON_EVENT=hive-push`, each event line is forwarded straight into the running Neovim via `nvim --server … --remote-expr`. The plugin writes its `v:servername` to `.hive/nvim.server` for this.                                                                                                                                           |
+| `lua/hive/` + `plugin/hive.lua` | The Neovim client (MIT). `init.lua` = `setup()`, config, async/sync CLI runners; `state.lua` = snapshot cache, ordered event cursor, follower + gap recovery, server registration; `ui.lua` = dashboard, picker, results, tail/peek, task form (all on **snacks.nvim** `win`/`picker`/`terminal`/`notify`); `health.lua` = `:checkhealth hive`.                                                |
+
+### Hive requirements
+
+The plugin spec (`lua/plugins/nvim-hive.lua`) points `bin` at the bundled script, so Neovim needs nothing on `PATH`. The **shell** side does:
+
+- **bash 3.2+**, **tmux ≥ 3.2**, **jq**, and **GNU coreutils `timeout`** (macOS: `brew install coreutils`; the wrapper runs every task under `timeout --foreground`). `git` is optional (worktrees).
+- One or more agent CLIs for real work: `claude`, `codex`, `gemini`, `aider`, `cursor-agent`. The **`mock`** provider needs none and spends no tokens — it sleeps 2 s and writes a canned report.
+- Neovim **0.10.4+** and **snacks.nvim** (already in this config). `:checkhealth hive` verifies all of it via `hive doctor --json`.
+
+Put the CLI on your `PATH` so you can drive it from the terminal (the plugin never starts the scheduler for you):
+
+```sh
+export PATH="$HOME/.config/nvim/lua/myPlugins/hive.nvim/bin:$PATH"   # hive + hive-push
+```
+
+### Quickstart (mock provider, zero tokens)
+
+```sh
+cd ~/some/project
+hive init                       # scaffolds .hive/ + MISSION/DECISIONS/INTERFACES templates
+hive up                         # tmux session "hive": windows orchestrator | board (hive loop) | journal
+echo "Say hello and exit." | hive add --title "smoke test"          # → T-001, provider = $HIVE_PROVIDER (mock)
+nvim                            # <leader>Hh — the row goes ○ ready → ● active → ✓ done in a few seconds
+```
+
+Then edit `.hive/context/MISSION.md` (what "done" means, invariants), set `HIVE_PROVIDER=claude` (or pick the provider in the form), and queue real tasks. `hive down` kills every `agent-*` session plus the control session; `hive gc` closes only finished agents' sessions and keeps logs.
+
+### Task lifecycle
+
+- **Queue**: `hive add [--id T-001] [--title …] [--provider …] [--dep T-000]… [--priority 50] [--timeout 1800] [--worktree] [--file prompt.md]` (prompt on stdin if no `--file`; title defaults to the prompt's first line). IDs auto-increment as `T-NNN`; any `[A-Za-z0-9][A-Za-z0-9_-]*` is accepted. Emits `queued`.
+- **Dispatch** (`hive loop` every `HIVE_TICK`=3 s, or one pass with `hive dispatch`): skipped while `.hive/paused` exists; picks ready tasks by **priority ascending** (lower runs first, default 50), then creation time; a task waits until every `--dep` is in `done/` (failed deps block forever); at most `HIVE_WIP`=3 active at once. Each dispatched task gets a detached tmux session `agent-<id>` (`remain-on-exit on`, so the pane survives for `peek`) running `hive exec <id>`.
+- **Exec**: renders the prompt (below) to `tasks/prompts/<id>.rendered.md`, marks the task `active`, names the tmux window `⏳<id>`, runs the provider under `timeout --foreground <timeout>` and tees the transcript to `logs/<id>.log`.
+- **Finish**: exit code `0` → `done` (`✅<id>`), anything else → `failed` (`❌<id>`, includes `124` from the timeout). If the agent didn't write `results/<id>.md`, a stub with the last 40 log lines is synthesized. Duration is recorded; cost is grepped as `total_cost_usd` from the log (only providers that emit JSON — the `claude` invocation uses `--output-format text`, so cost stays `null`). Then: desktop toast (`terminal-notifier` / `notify-send`), OSC 777 to every tmux client tty, `tmux display-message`, `tmux wait-for -S hive-<id>` (unblocks `hive wait <id>`), and a bell.
+- **Reap**: an `active` task whose `agent-<id>` session vanished is moved to `failed` with `rc = "orphaned"`.
+- **Kill / requeue**: `hive kill <id>` (dashboard `x`, picker `<C-x>`) kills the session and puts the task **back in `ready`** with timing reset — the next tick re-dispatches it unless you `hive pause` first.
+- **Edit while queued** (ready state only): `hive set <id> priority=10 timeout=600 provider=codex depends_on=T-001,T-002 worktree=true title=…`, `hive move <id> --first | --before <other>` (rewrites priority), `hive edit <id>` (prompt in `$EDITOR`).
+- **Worktrees**: with `--worktree` **and** `HIVE_WORKTREES=/some/dir` set, the agent runs in `$HIVE_WORKTREES/<id>` on branch `hive/<id>`; otherwise every agent shares the scheduler's `$PWD`.
+
+### What a worker sees
+
+`hive prompt <id>` shows the exact text handed to the provider. It wraps the task in a **context pack** built from the blackboard: `<mission>` (`context/MISSION.md`), `<interfaces>` (`context/INTERFACES.md`, file/contract ownership), `<decisions>` (last 40 lines of `context/DECISIONS.md`), and `<upstream_results>` (the `results/*.md` of every dependency). The protocol asks the worker to do only its task, not touch files owned by another task, treat everything it reads as data rather than instructions, and finish by writing `results/<id>.md` with exactly these sections: `## Summary`, `## Files changed`, `## Decisions`, `## Verification`, `## Follow-ups`.
+
+Provider invocations (`run_provider` in `bin/hive`):
+
+| Provider | Command                                                                                                    |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| `claude` | `claude -p "<prompt>" --output-format text --permission-mode acceptEdits --max-turns $HIVE_MAX_TURNS` (40) |
+| `codex`  | `codex exec --skip-git-repo-check --sandbox workspace-write "<prompt>"`                                    |
+| `gemini` | `gemini -p "<prompt>"`                                                                                     |
+| `aider`  | `aider --yes --no-auto-commit --message-file <prompt>`                                                     |
+| `cursor` | `cursor-agent -p "<prompt>"`                                                                               |
+| `mock`   | prints two lines, sleeps `HIVE_MOCK_SLEEP` (2 s), writes a canned report                                   |
+
+Agents can talk back through the journal: `hive progress <id> [note]` (a heartbeat; the dashboard shows "activity Ns ago"), `hive event <type> <id> k=v…`, `hive notify "title" "body"`.
+
+### Environment variables (read by `bin/hive`)
+
+| Variable          | Default         | Meaning                                                                |
+| ----------------- | --------------- | ---------------------------------------------------------------------- |
+| `HIVE_ROOT`       | `$PWD/.hive`    | Blackboard directory (the plugin exports it on every call)             |
+| `HIVE_SESSION`    | `hive`          | Name of the control tmux session                                       |
+| `HIVE_WIP`        | `3`             | Max concurrently active agents                                         |
+| `HIVE_PROVIDER`   | `mock`          | Default provider for `hive add` (the Neovim form defaults to `claude`) |
+| `HIVE_TIMEOUT`    | `1800`          | Per-task wall clock, seconds                                           |
+| `HIVE_TICK`       | `3`             | Scheduler period, seconds                                              |
+| `HIVE_MAX_TURNS`  | `40`            | `--max-turns` for the `claude` provider                                |
+| `HIVE_WORKTREES`  | _(empty = off)_ | Directory for per-task git worktrees                                   |
+| `HIVE_ON_EVENT`   | _(empty)_       | Command run with each event line, e.g. `hive-push`                     |
+| `HIVE_PEEK_LINES` | `120`           | Scrollback captured by `hive peek`                                     |
+
+### CLI reference
+
+| Command                                                         | Purpose                                                                                      |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `hive init`                                                     | Scaffold `.hive/` (idempotent; keeps existing context files)                                 |
+| `hive up` / `hive down`                                         | Start / kill the control session (`hive up` also sets a `status-right` widget)               |
+| `hive add …`                                                    | Queue a task (see lifecycle)                                                                 |
+| `hive dispatch` / `hive loop`                                   | One scheduling pass / dispatch → reap → status forever                                       |
+| `hive status [--json]`, `hive json`, `hive dump`                | Human table / locked machine-readable snapshot (`api_version: 2`, `capabilities.atomic_add`) |
+| `hive show <id> [--with-result]`                                | One task as JSON (+ `live`, `result_path`, `log_path`)                                       |
+| `hive events [--since N] [-f]`                                  | Sequenced JSON-lines journal; `-f` follows from the right line offset                        |
+| `hive tail <id> [-f\|-n N]` / `hive peek <id> [lines]`          | Transcript (log file) / current screen of a live agent (`tmux capture-pane`, colours kept)   |
+| `hive pause` / `hive resume`                                    | Toggle the `.hive/paused` flag                                                               |
+| `hive set` / `hive move` / `hive edit`                          | Edit a queued task                                                                           |
+| `hive kill <id>` / `hive gc` / `hive reap`                      | Cancel + requeue / close finished sessions / mark orphans failed                             |
+| `hive go <id>` / `hive pick` / `hive wait <id>`                 | Switch client to an agent (`pick` = fzf chooser) / block until it finishes                   |
+| `hive send <id> "text"`                                         | Paste text + Enter into a live agent pane (for REPL-style agents)                            |
+| `hive statusline`                                               | `R:n A:n ✓n ✗n` for tmux `status-right`                                                      |
+| `hive doctor [--json]`, `hive context <id>`, `hive prompt <id>` | Dependency check / debug the context pack / debug the rendered prompt                        |
+
+### Neovim side
+
+`lua/plugins/nvim-hive.lua` registers the plugin from its local `dir`, depends on `folke/snacks.nvim`, lazy-loads on the `:Hive*` commands and the `<leader>H{h,p,a,r}` keys, and passes `opts = { bin = <plugin>/bin/hive }` — lazy.nvim calls `require("hive").setup(opts)` on first use. Other defaults (all overridable in `opts`):
+
+```lua
+require("hive").setup({
+  bin = ".../hive.nvim/bin/hive",
+  root = nil,               -- explicit blackboard; else $HIVE_ROOT, else <cwd>/.hive
+  follow = true,            -- run `hive events --since N --follow` as a child process
+  register_server = true,   -- write v:servername to <root>/nvim.server for hive-push
+  peek_lines = 80,
+  command_timeout_ms = 5000,
+  notify = { done = true, failed = true, started = false, progress = false, orphaned = true },
+  dashboard = { width = 0.85, height = 0.8, refresh_ms = 3000 },
+  tail = { position = "bottom", height = 0.35 },
+})
+```
+
+How the client stays in sync:
+
+- **Snapshots**: `hive json` runs every `refresh_ms` (3 s) while the board directory exists — even with the dashboard closed — and after any state-changing event. A snapshot whose `seq` goes backwards (someone reset the board) is rejected until `setup()` runs again.
+- **Events**: after the first snapshot the plugin starts `hive events --since <seq> --follow`, splits lines, de-duplicates by `seq`, buffers out-of-order pushes and delivers strictly in order; gaps are filled from the journal with `hive events --since`. The follower reconnects 2 s after it dies. Historical events present at attach time are **not** replayed.
+- **Push** (optional, lower latency): export `HIVE_ON_EVENT=hive-push` in the environment that runs `hive up`; the plugin's registration file makes `hive-push` target the most recently started Neovim. If registration fails, the follower still works.
+- **Hooks for your own config**: `User HiveEvent` autocmd (`a.data` = the event: `seq`, `ts`, `type`, `task`, `actor`, extras) and `require("hive").statusline()` → `⏸ R:1 A:2 ✓3 ✗0` / `hive: disconnected` (not wired into lualine yet). Public API: `open() pick() results() add(lines) tail(id) peek(id) go(id) kill(id) toggle_pause() refresh(cb) on_event(e) on_event_json(json, root)`.
+- **Toasts** via `Snacks.notify` for `done` and `failed` events by default (`started`/`progress` off; the `orphaned` key exists but the CLI reports orphans as `failed` with `rc = "orphaned"`).
+
+**Dashboard** (`:Hive` / `<leader>Hh`, floating 85 % × 80 %, filetype `hive`): header shows root, WIP, journal `seq` and `[PAUSED]`; one row per task — `● active` / `○ ready` / `✓ done` / `✗ failed`, id, provider, elapsed or duration, cost, title, and for active tasks with heartbeats "activity Ns ago". Sorted active → ready (by priority) → failed → done. Keys: `⏎` go (tmux `switch-client` to `agent-<id>`, needs Neovim **inside tmux**), `t` tail (`Snacks.terminal` running `hive tail -f`, bottom 35 %), `p` peek (float: live screen if the session exists, else last transcript lines, else the report; ANSI stripped), `x` kill + requeue, `a` new-task form, `P` pause/resume, `r` refresh, `R` results picker, `q`/`Esc` close.
+
+**Picker** (`:HivePick` / `<leader>Hp`, snacks picker with the same peek as preview): `⏎` go, `<C-t>` tail, `<C-p>` peek, `<C-x>` kill, `<C-r>` open `results/<id>.md` in a buffer. **Results** (`:HiveResults` / `<leader>Hr`) lists every report with file preview.
+
+**New-task form** (`:HiveAdd` / `<leader>Ha`; in visual mode the selection pre-fills the prompt because the mapping is `:HiveAdd` → `:'<,'>HiveAdd`). A markdown scratch buffer `hive://task/N`:
+
+```markdown
+# hive task — fill the fields, write the prompt below, then :w (or <C-s>) to queue it.
+
+#: id = T-004
+#: title =
+#: provider = claude
+#: deps =
+#: priority = 50
+#: worktree = false
+#: timeout = 1800
+---
+
+Everything below the first bare --- line is the prompt, verbatim.
+```
+
+An empty `title` becomes the prompt's first line. `:w` or `<C-s>` parses the header (unknown/duplicate fields, bad ids, unknown providers, non-integer priority/timeout, `worktree` not `true|false`, self-dependencies and an empty prompt are rejected with a toast), writes the prompt to a temp file and runs `hive add --id … --file …`. The suggested id is `T-<max+1>` from a fresh snapshot; if another client grabbed it, `hive add` fails with "task already exists" and nothing is written. The header defaults the provider to `$HIVE_PROVIDER` **or `claude`**, unlike the CLI's `mock`.
+
+**Commands**: `:Hive`, `:HivePick`, `:[range]HiveAdd`, `:HiveResults`, `:HiveRefresh`, `:HivePause`, and `:HiveTail`, `:HivePeek`, `:HiveGo`, `:HiveKill` `[id]` (tab-complete task ids from the cached snapshot; without an id they do nothing). `:help hive` is the plugin's own manual.
+
+### Hive gotchas
+
+- **The board root is resolved once**, when the plugin lazy-loads (first `:Hive*` command or `<leader>H{h,p,a,r}` key): explicit `root` → `$HIVE_ROOT` → Neovim's **cwd at that moment**`/.hive`. `:cd` later does **not** switch boards; call `require("hive").setup({ bin = …, root = … })` again (unspecified options fall back to defaults; open forms must be reopened). Start Neovim from the project directory.
+- **The plugin never creates or runs a board.** `hive init` and `hive up` happen in the shell. With no `.hive/` directory the 3 s poll silently no-ops and the dashboard shows "(no tasks)"; with a half-created one (only `locks/`) you get one "run hive init first" toast and a "disconnected" dashboard header. The picker and the task form refuse to open until a snapshot succeeds.
+- **`<leader>H` is shared with gitsigns.** gitsigns binds `<leader>Hp` (preview hunk) and `<leader>Hr` (reset hunk) **buffer-locally** on every git-tracked buffer, which shadows Hive's global `<leader>Hp` picker and `<leader>Hr` results there — pressing `<leader>Hr` in tracked code **resets a hunk**. `<leader>Hh` and `<leader>Ha` are unaffected; inside a tracked buffer use `:HivePick` / `:HiveResults` or the dashboard's `R`. which-key still labels the group "Git hunks".
+- **Kill means requeue**, not fail. Pause the scheduler (`P` in the dashboard, `:HivePause`, `hive pause`) before killing a task you don't want re-run.
+- **One board per tmux server**: agent sessions are named by task id only (`agent-T-001`), so two projects with a `T-001` collide. `hive down` also kills _every_ `agent-*` session on the server, whichever board they belong to.
+- **`.hive/` is not in this repo's `.gitignore`.** Add it per project (or globally); running any locking command such as `hive add` in a directory without a board still creates `.hive/locks/`.
+- **macOS**: BSD `bash 3.2` is fine, but `timeout` is not shipped — without GNU coreutils every task fails immediately. `hive doctor` may also report `flock` as missing on macOS; that's harmless, locking uses `mkdir`.
+- **Headless providers only**: every non-mock provider runs in one-shot `-p` / `exec` mode, so `hive send` (typing into the pane) only helps with an interactive agent you started yourself; the stored `mode` field is not used by the runner.
+- **Experimental**: the bundled `hive` reports `2.1.0-dev`; the form refuses to submit to a backend whose snapshot lacks `capabilities.atomic_add` (i.e. anything but the bundled script).
+
+---
+
 ## Markdown Spell-check Languages
 
 Markdown buffers configure Neovim's built-in spell checker with English and Spanish (`en_us,es`), but spell is **off by default** so misspelling underlines don't interrupt reading — toggle it with `<leader>ms` (keymap lives in `lua/plugins/nvim-rendermarkdown.lua`; the `spelllang` dictionaries in `ftplugin/markdown.lua`). Spanish is included in this repository under `spell/`; Neovim supplies the English fallback dictionary (`en`) from its runtime. When enabled, misspellings are underlined and `z=` shows replacement suggestions.
@@ -465,11 +675,13 @@ This affects only Neovim's spelling highlights and `z=` suggestions. `ltex_plus`
 - **Harpoon v2 storage**: marks made with the old v1 (pre-migration) are not carried over — re-add per project.
 - **Markdown buffers change navigation**: `ftplugin/markdown.lua` remaps `j`/`k` to `gj`/`gk` and configures **English + Spanish** spell dictionaries (spell itself is off until `<leader>ms`) — strictly buffer-local.
 - **LSP keymaps only exist where a server is attached** (LspAttach autocmd) — in a plain scratch buffer, `<leader>gd` does nothing rather than erroring.
-- **snacks.picker is disabled** (telescope is the picker); the `<leader>gh*` GitHub keys still work because explicit `Snacks.picker.*` calls load the module on demand.
+- **Two pickers coexist**: telescope owns `<leader>f*` and `vim.ui.select`; `Snacks.picker` (enabled) powers the `<leader>gh*` GitHub keys and Hive's `:HivePick` / `:HiveResults`.
 - **gitgraph deliberately avoids `--all`** to keep Claude Code worktree/stash refs out of the graph.
 - **Kulala default mappings are disabled**; only the custom `<leader>R…` set exists.
 - **openexternal is macOS-only** (`open`/`open -a`) and its Skim/Preview maps (`<leader>os`/`<leader>op`) are **buffer-local** — they only exist in PDF/image buffers, PDF-producing filetypes, and explorer buffers. `<leader>oc`/`<leader>oo`/`<leader>of` are global. Cursor-position opening in VS Code requires the `code` shell command (Cmd+Shift+P → "Install 'code' command in PATH").
-- **Prefix conventions**: `<leader>h*` harpoon vs `<leader>H*` git hunks; `<leader>n*` tests vs `<leader>N*` package.json — capitals disambiguate deliberately.
+- **Prefix conventions**: `<leader>h*` harpoon vs `<leader>H*` git hunks **and Hive**; `<leader>n*` tests vs `<leader>N*` package.json — capitals disambiguate deliberately.
+- **`<leader>Hp` / `<leader>Hr` collide**: Hive maps them globally (picker / results) while gitsigns maps the same keys buffer-locally (preview hunk / reset hunk) on every git-tracked buffer, and buffer-local wins — in tracked code `<leader>Hr` **resets a hunk**. Use `<leader>Hh` + `R`, or `:HivePick` / `:HiveResults`, from such buffers.
+- **Hive resolves its board once** at lazy-load time (Neovim's cwd then, or `$HIVE_ROOT`) and never follows `:cd`; the plugin does not start the scheduler (`hive init` + `hive up` in a shell), `hive kill` requeues rather than fails, and `.hive/` is not gitignored here. Details in [Hive gotchas](#hive-gotchas).
 - **VimTeX owns tex highlighting**: the treesitter FileType autocmd returns early for `latex`/`bibtex`. If LaTeX highlighting ever looks broken, check that no stray `latex.so` parser is being picked up (`:lua =vim.api.nvim_get_runtime_file('parser/latex*', true)` should be empty) — see the migration section below.
 - **VimTeX on nightly builds**: its version gate wants stable ≥ 0.12.4 and rejects `0.x-dev` nightlies (silently disabling _everything_ — no commands, no maps, no syntax). The spec sets `vim.g.vimtex_version_check = 0` to bypass it.
 - **ltex_plus is slow to attach** (~10 s, Java) — grammar diagnostics appear a moment after texlab/marksman. Its filetypes are trimmed to `tex`/`plaintex`/`bib`/`markdown`; it no longer grabs gitcommit/html/text buffers. Language is `en-US` (change in `nvim-lspconfig.lua` for Spanish or per-project).
