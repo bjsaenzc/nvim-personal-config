@@ -32,7 +32,7 @@ Startup is fully lazy-loaded: ~58 ms with 13 of 63 plugins loaded at startup (me
 | **gh CLI**                                                         | Snacks GitHub pickers                                                                                           |
 | **ImageMagick / luarocks (magick)**                                | image.nvim (lazy builds this via `hererocks`)                                                                   |
 | **mermaid-cli (`mmdc`)**                                           | diagram.nvim mermaid rendering                                                                                  |
-| **tmux + TPM (vim-tmux-navigator tmux plugin)**                    | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux) |
+| **tmux ≥ 3.3**                                                    | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux) |
 | **cursor-agent / claude CLI** (optional)                           | sidekick.nvim AI tools                                                                                          |
 
 **Everything else installs itself.** Two Mason mechanisms guarantee binaries on a fresh machine:
@@ -76,6 +76,10 @@ To add a plugin: drop a new spec file in `lua/plugins/`. To retire one: delete t
 ├── spell/
 │   ├── es.utf-8.spl                # Spanish spell dictionary
 │   └── es.utf-8.sug
+├── utils/
+│   └── tmux/
+│       ├── tmux.conf               # Ghostty + tmux + Neovim settings and keybindings
+│       └── README.md               # tmux installation, shortcuts, and customization
 └── lua/
     ├── core/
     │   ├── options.lua             # Editor options (numbers, tabs, undo, folds…)
@@ -391,32 +395,31 @@ All treesitter parsers (22 languages) are declared in `lua/plugins/nvim-treesitt
 
 Everything runs in **Ghostty → tmux → Neovim**.
 
-**`~/.tmux.conf`**:
+The maintained configuration is [utils/tmux/tmux.conf](utils/tmux/tmux.conf). See the [tmux README](utils/tmux/README.md) for installation, the full keybinding reference, and optional TPM setup. From the repository root:
 
-```tmux
-set -g mouse on
-set -g allow-passthrough on
-set -g visual-activity off
-set -g history-limit 50000
-set -as terminal-features ',xterm-ghostty:RGB'
-set-option -g focus-events on
-
-# Smart pane switching with awareness of Vim splits.
-# See: https://github.com/christoomey/vim-tmux-navigator
-set -g @plugin 'tmux-plugins/tpm'
-set -g @plugin 'christoomey/vim-tmux-navigator'
-
-# Keep this as the LAST line of the file
-run '~/.tmux/plugins/tpm/tpm'
+```sh
+mkdir -p ~/.config/tmux
+cp utils/tmux/tmux.conf ~/.config/tmux/tmux.conf
+# Apply to a running tmux server; otherwise start tmux normally.
+tmux source-file ~/.config/tmux/tmux.conf
 ```
 
-- `mouse on` — mouse scrolling/pane resize in tmux.
-- `allow-passthrough on` — **required** for image.nvim's kitty-graphics escapes to reach Ghostty through tmux (inline images/mermaid in Markdown).
-- `terminal-features ',xterm-ghostty:RGB'` — true color through tmux (Ghostty sets `TERM=xterm-ghostty`); without it, `termguicolors` themes look washed out.
-- `history-limit 50000` — scrollback (tmux default is only 2000 lines).
-- `focus-events on` — forwards terminal focus to Neovim (gitsigns refresh, autoread checks).
-- Plugins are managed by **TPM** (`git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm`, then `prefix + I` to install). The `vim-tmux-navigator` tmux plugin pairs with the Neovim plugin so `<C-h/j/k/l>` moves between tmux panes and nvim splits transparently — without the TPM `run` line at the bottom, the `@plugin` entries are inert and the tmux-side bindings won't exist.
-- **Not pinned** (tmux ≥ 3.5 defaults are already right): `escape-time 10` and `default-terminal "tmux-256color"`. On machines with older tmux, set both explicitly — pre-3.5 defaulted `escape-time` to 500 ms, which adds half a second of lag to every `<Esc>` in Neovim and TUI apps (compounding the `timeoutlen=300` single-Esc passthrough).
+The prefix is **`Ctrl-b`**. Press it, release it, then press the binding key:
+
+- `Ctrl-b r` reloads `~/.config/tmux/tmux.conf`.
+- `Ctrl-b |` / `Ctrl-b -` split panes; `Ctrl-b c` creates a window, all in the current directory.
+- `<C-h/j/k/l>` moves between tmux panes and Neovim splits using the config's built-in tmux bindings and the Neovim `vim-tmux-navigator` plugin.
+- `Ctrl-b s` opens the session/window tree; `Ctrl-b S` creates or attaches to a named session; `Ctrl-b g` prompts for an existing session to switch to.
+- The bottom status bar shows the session name and time, with `*` after the active window's name.
+
+Terminal settings are explicit in the file:
+
+- `default-terminal "tmux-256color"`, Ghostty `RGB`/`extkeys` features, and undercurl overrides support true color, extended keys, and diagnostic undercurls.
+- `escape-time 0` removes tmux's Escape delay; `focus-events on` forwards focus events to Neovim.
+- `allow-passthrough on` lets image.nvim's kitty graphics reach Ghostty for inline images and Mermaid diagrams; `visual-activity off` disables visual activity messages.
+- `set-clipboard on` enables OSC 52 clipboard integration; `mouse on` enables mouse interaction; `history-limit 50000` sets scrollback capacity.
+
+The file declares TPM and `vim-tmux-navigator` plugins but does **not** initialize TPM. The built-in `<C-h/j/k/l>` tmux bindings work without TPM; follow the [optional TPM setup](utils/tmux/README.md#optional-tpm-setup) to activate plugin management.
 
 **Ghostty** (`~/Library/Application Support/com.mitchellh.ghostty/config`):
 
