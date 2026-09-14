@@ -6,6 +6,7 @@ return {
   opts = {
     spec = {
       { "<leader>a", group = "AI (sidekick)" },
+      { "<leader>A", group = "AI swarm" },
       { "<leader>b", group = "Buffers" },
       { "<leader>c", group = "Diff / Trouble symbols" },
       { "<leader>d", group = "Debug (DAP)" },
