@@ -410,6 +410,8 @@ The prefix is **`Ctrl-b`**. Press it, release it, then press the binding key:
 - `Ctrl-b |` / `Ctrl-b -` split panes; `Ctrl-b c` creates a window, all in the current directory.
 - `<C-h/j/k/l>` moves between tmux panes and Neovim splits using the config's built-in tmux bindings and the Neovim `vim-tmux-navigator` plugin.
 - `Ctrl-b s` opens the session/window tree; `Ctrl-b S` creates or attaches to a named session; `Ctrl-b g` prompts for an existing session to switch to.
+- `Ctrl-b H` prompts for a source pane (for example, `work:1.1`) and moves it into the current window as a side-by-side split. This overrides the earlier left-resize binding; `Ctrl-b J/K/L` still resize down/up/right by 5.
+- `Ctrl-b h` prompts for a window to link into the current session, keeping it shared with the source session. The current command has a missing quote; see [cross-session panes and windows](utils/tmux/README.md#cross-session-panes-and-windows) for the correction and examples.
 - The bottom status bar shows the session name and time, with `*` after the active window's name.
 
 Terminal settings are explicit in the file:

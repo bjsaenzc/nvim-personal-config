@@ -116,7 +116,8 @@ work directly. Press `Ctrl-b`, release it, then press the next key.
 | `C-b \|`                     | Split vertically (same directory)      |
 | `C-b -`                      | Split horizontally (same directory)    |
 | `Ctrl-h/j/k/l` _(no prefix)_ | Move between panes — and Neovim splits |
-| `C-b H/J/K/L`                | Resize pane by 5 (repeatable)          |
+| `C-b J/K/L`                  | Resize pane down/up/right by 5 (repeatable) |
+| `C-b H`                      | Prompt for a source pane to move into a side-by-side split |
 | `C-b m`                      | Toggle zoom on current pane            |
 | `C-b x`                      | Kill pane (asks for confirmation)      |
 
@@ -128,6 +129,7 @@ work directly. Press `Ctrl-b`, release it, then press the next key.
 | `Alt-h` / `Alt-l` _(no prefix)_ | Previous / next window              |
 | `C-b Tab`                       | Toggle last window                  |
 | `C-b <` / `C-b >`               | Move window left / right            |
+| `C-b h`                         | Prompt to link a window from another session (see correction below) |
 | `C-b X`                         | Kill window (asks for confirmation) |
 
 ### Sessions
@@ -137,6 +139,28 @@ work directly. Press `Ctrl-b`, release it, then press the next key.
 | `C-b s` | Session/window tree picker                  |
 | `C-b S` | Create or attach to a named session         |
 | `C-b g` | Prompt for an existing session to switch to |
+
+### Cross-session panes and windows
+
+- **Move a pane:** press `C-b H` and enter a source target at the
+  `Bring from session:` prompt, such as `work:1.1` (session `work`, window 1,
+  pane 1). This runs `join-pane -h`, moving the existing pane into the current
+  window as a side-by-side split. The later `H` binding overrides
+  `resize-pane -L 5`, so `C-b H` no longer resizes left.
+- **Share a window:** press `C-b h` and enter `work:1` at the
+  `Link window (session:window):` prompt. The intended command links that
+  window into the current session; both sessions then share the same window
+  and panes.
+
+The current `h` binding in `tmux.conf` is missing the closing single quote
+after `%%`, so submitting the prompt fails instead of linking the window.
+To enable it, replace that binding in your installed config with:
+
+```tmux
+bind h command-prompt -F -p "Link window (session:window):" "link-window -s '%%' -t '#S:'"
+```
+
+Reload with `C-b r` after applying the correction.
 
 ### Copy mode (vi keys)
 
