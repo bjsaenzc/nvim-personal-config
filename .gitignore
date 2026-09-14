@@ -4,3 +4,10 @@
 # Compiled Lua
 luac.out
 graphify-out/
+
+# aiswarm test evidence and runtime artifacts
+artifacts/
+.aiswarm/
+
+# lazy-lock file
+lazy-lock.json

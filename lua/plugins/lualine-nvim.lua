@@ -13,6 +13,20 @@ return {
       theme = "auto", -- follow the active colorscheme instead of a hardcoded one
     },
     sections = {
+      lualine_x = {
+        {
+          -- aiswarm task counts: reads the plugin's cached store only when it is already loaded,
+          -- so redraws never trigger lazy-loading, subprocesses or file reads.
+          function()
+            local ok, aiswarm = pcall(function() return package.loaded["aiswarm"] end)
+            if not ok or not aiswarm then return "" end
+            return aiswarm.statusline()
+          end,
+          cond = function() return package.loaded["aiswarm"] ~= nil end,
+          on_click = function() if package.loaded["aiswarm"] then require("aiswarm").open() end end,
+        },
+        "encoding", "fileformat", "filetype",
+      },
       lualine_c = {
         {
           -- Customize the filename part of lualine to be parent/filename
