@@ -187,7 +187,7 @@ Reload with `C-b r` after applying the correction.
 | `default-terminal tmux-256color` + `terminal-features RGB` | 24-bit color inside tmux                                                   |
 | `Smulx` / `Setulc` overrides                               | Colored undercurls for LSP diagnostics                                     |
 | `escape-time 0`                                            | No lag after pressing `Esc` in Neovim                                      |
-| `allow-passthrough on`                                     | Pass kitty graphics through to Ghostty for image.nvim and Mermaid diagrams |
+| `allow-passthrough on`                                     | Pass kitty graphics through to Ghostty for image.nvim and Mermaid/D2 diagrams |
 | `visual-activity off`                                      | Disable visual activity messages                                           |
 | `history-limit 50000`                                      | Keep 50,000 lines of scrollback                                            |
 | `focus-events on`                                          | Neovim's `autoread` and focus autocmds fire correctly                      |
