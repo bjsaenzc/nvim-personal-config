@@ -32,6 +32,7 @@ Startup is fully lazy-loaded: ~58 ms with 13 of 64 plugins loaded at startup (me
 | **gh CLI**                                                         | Snacks GitHub pickers                                                                                                                           |
 | **ImageMagick / luarocks (magick)**                                | image.nvim (lazy builds this via `hererocks`)                                                                                                   |
 | **mermaid-cli (`mmdc`)**                                           | diagram.nvim mermaid rendering                                                                                                                  |
+| **D2 (`d2`)**                                                      | diagram.nvim D2 rendering (macOS: `brew install d2`)                                                                                            |
 | **tmux ≥ 3.3**                                                     | Seamless `<C-h/j/k/l>` pane navigation, image passthrough — see [Terminal Stack](#terminal-stack-ghostty--tmux); aiswarm scheduler + worker sessions |
 | **jq** + **GNU coreutils `timeout`**                               | aiswarm launcher (`bin/aiswarm`): jq for the launcher and legacy v2 boards; GNU `timeout` only for legacy v2 boards (macOS: `brew install coreutils`) |
 | **cursor-agent / claude CLI** (optional)                           | sidekick.nvim AI tools; aiswarm providers (`claude`, `codex`, `gemini`, `aider` — the `mock` provider needs none)               |
@@ -213,7 +214,7 @@ Language configs: **Python** (debugpy; Flask, FastAPI/uvicorn, current file, ven
 | `markdown-preview.nvim`                                          | Live browser preview: `:MarkdownPreviewToggle`.                                                                                                                                                                                                                                                                                                                                                   |
 | `render-latex.nvim`                                              | Renders LaTeX math inside Markdown buffers.                                                                                                                                                                                                                                                                                                                                                       |
 | `image.nvim`                                                     | Inline images, **kitty graphics backend** (Ghostty; needs tmux `allow-passthrough on`). `ft = markdown`. Images scale to the window (`max_width/height_window_percentage = 90`) instead of fixed cell limits.                                                                                                                                                                                     |
-| `diagram.nvim`                                                   | Mermaid diagrams in Markdown via image.nvim, **rendered on demand**: in-buffer auto-render is disabled (`events.render_buffer = {}`; renders clear on `BufLeave`), and `<leader>KK` opens the diagram under the cursor **in a new tab**. Mermaid renderer: dark theme, transparent background, 1600×1200.                                                                                         |
+| `diagram.nvim`                                                   | Mermaid and D2 diagrams in Markdown via image.nvim, **rendered on demand**: in-buffer auto-render is disabled (`events.render_buffer = {}`; renders clear on `BufLeave`), and `<leader>KK` opens the diagram under the cursor **in a new tab**. Mermaid renderer: dark theme, transparent background, 1600×1200. D2 renderer: Dark Mauve theme (200), scale 1.                                    |
 | `package-info.nvim` (+ `nui.nvim`)                               | Inline dependency versions in `package.json`. `<leader>Ns` show, `<leader>Nu` update, `<leader>Nd` delete, `<leader>Ni` install, `<leader>Nc` change version.                                                                                                                                                                                                                                     |
 | `kulala.nvim`                                                    | REST client for `.http`/`.rest` files. Default maps disabled; custom `<leader>R…` set.                                                                                                                                                                                                                                                                                                            |
 
@@ -351,8 +352,8 @@ For LaTeX/Markdown/Typst-style sources, `<leader>os`/`<leader>op` open the **com
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `<leader>mm` | Toggle in-buffer rendering (render-markdown.nvim, current buffer)                                                           |
 | `<leader>ms` | Toggle spell check (en_us + es; **off by default** so reading isn't interrupted)                                            |
-| `<leader>KK` | Render the mermaid diagram under the cursor and open it in a new tab (auto-render in-buffer is disabled)                    |
-| `<leader>KO` | Render the Mermaid diagram under the cursor as a high-quality PNG (4×, 2400×1800 viewport) and open it in the system viewer |
+| `<leader>KK` | Render the Mermaid/D2 diagram under the cursor and open it in a new tab (auto-render in-buffer is disabled)                 |
+| `<leader>KO` | Render the Mermaid/D2 diagram under the cursor as a high-quality PNG (Mermaid: 4×, 2400×1800 viewport; D2: scale 2) and open it in the system viewer |
 
 ### LaTeX (buffer-local in `.tex` files — `ftplugin/tex.lua`)
 
@@ -442,7 +443,7 @@ Terminal settings are explicit in the file:
 
 - `default-terminal "tmux-256color"`, Ghostty `RGB`/`extkeys` features, and undercurl overrides support true color, extended keys, and diagnostic undercurls.
 - `escape-time 0` removes tmux's Escape delay; `focus-events on` forwards focus events to Neovim.
-- `allow-passthrough on` lets image.nvim's kitty graphics reach Ghostty for inline images and Mermaid diagrams; `visual-activity off` disables visual activity messages.
+- `allow-passthrough on` lets image.nvim's kitty graphics reach Ghostty for inline images and Mermaid/D2 diagrams; `visual-activity off` disables visual activity messages.
 - `set-clipboard on` enables OSC 52 clipboard integration; `mouse on` enables mouse interaction; `history-limit 50000` sets scrollback capacity.
 
 The file declares TPM and `vim-tmux-navigator` plugins but does **not** initialize TPM. The built-in `<C-h/j/k/l>` tmux bindings work without TPM; follow the [optional TPM setup](utils/tmux/README.md#optional-tpm-setup) to activate plugin management.
