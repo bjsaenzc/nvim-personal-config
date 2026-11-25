@@ -1,3 +1,36 @@
+-- diagram.nvim keys its renderer caches only by source text. Without this
+-- discriminator, an image rendered before a renderer-option change is reused
+-- indefinitely, so changes to scale/size/theme appear to do nothing. The hash is
+-- appended to the source as a comment in the diagram's own language.
+local function key_cache_by_options(renderer_id, comment)
+	local renderer = require("diagram.renderers." .. renderer_id)
+	local render = renderer.render
+	renderer.render = function(source, renderer_opts)
+		-- Copied because the D2 renderer writes its default format back into the
+		-- table, which would change the hash between the first and second render.
+		renderer_opts = vim.deepcopy(renderer_opts or {})
+		local options_hash = vim.fn.sha256(vim.inspect(renderer_opts))
+		return render(source .. "\n" .. comment .. " diagram-render-options: " .. options_hash, renderer_opts)
+	end
+end
+
+-- High-quality, light-themed PNG settings for <leader>KO, keyed by renderer id.
+local viewer_options = {
+	mermaid = {
+		background = "transparent",
+		theme = "neutral",
+		scale = 4,
+		width = 2400,
+		height = 1800,
+	},
+	d2 = {
+		theme_id = 0, -- Neutral Default
+		scale = 2, -- on top of D2's built-in 2x PNG device scale
+	},
+}
+
+local viewer_labels = { mermaid = "Mermaid", d2 = "D2" }
+
 return {
 	"3rd/diagram.nvim",
 	ft = "markdown",
@@ -7,16 +40,8 @@ return {
 		},
 	},
 	config = function(_, opts)
-		-- diagram.nvim keys its Mermaid cache only by source text. Without this
-		-- discriminator, an image rendered before a renderer-option change is
-		-- reused indefinitely, so changes to scale/size appear to do nothing.
-		local mermaid = require("diagram.renderers.mermaid")
-		local render = mermaid.render
-		mermaid.render = function(source, renderer_opts)
-			renderer_opts = renderer_opts or {}
-			local options_hash = vim.fn.sha256(vim.inspect(renderer_opts))
-			return render(source .. "\n%% diagram-render-options: " .. options_hash, renderer_opts)
-		end
+		key_cache_by_options("mermaid", "%%")
+		key_cache_by_options("d2", "#")
 
 		require("diagram").setup(opts)
 	end,
@@ -34,6 +59,12 @@ return {
 				scale = 2,
 				width = 1600,
 				height = 1200,
+			},
+			d2 = {
+				theme_id = 200, -- Dark Mauve
+				-- D2 already exports PNGs at a 2x device scale, so 1 here is the
+				-- counterpart of Mermaid's scale = 2. dark_theme_id is SVG-only.
+				scale = 1,
 			},
 		},
 	},
@@ -57,7 +88,7 @@ return {
 				local diagram
 
 				for _, candidate in ipairs(diagrams) do
-					if candidate.renderer_id == "mermaid" then
+					if viewer_options[candidate.renderer_id] then
 						local start_row = candidate.range.start_row
 						local end_row = candidate.range.end_row
 						for i = start_row, 0, -1 do
@@ -80,17 +111,13 @@ return {
 				end
 
 				if not diagram then
-					vim.notify("No Mermaid diagram found at cursor", vim.log.levels.INFO)
+					vim.notify("No Mermaid or D2 diagram found at cursor", vim.log.levels.INFO)
 					return
 				end
 
-				local result = require("diagram.renderers.mermaid").render(diagram.source, {
-					background = "transparent",
-					theme = "neutral",
-					scale = 4,
-					width = 2400,
-					height = 1800,
-				})
+				local renderer_id = diagram.renderer_id
+				local renderer = require("diagram.renderers." .. renderer_id)
+				local result = renderer.render(diagram.source, viewer_options[renderer_id])
 				if not result then
 					return
 				end
@@ -99,7 +126,7 @@ return {
 					if vim.fn.filereadable(result.file_path) == 1 then
 						vim.ui.open(result.file_path)
 					else
-						vim.notify("High-quality Mermaid PNG was not created", vim.log.levels.ERROR)
+						vim.notify("High-quality " .. viewer_labels[renderer_id] .. " PNG was not created", vim.log.levels.ERROR)
 					end
 				end
 
@@ -124,7 +151,7 @@ return {
 			end,
 			mode = "n",
 			ft = "markdown",
-			desc = "Open Mermaid PNG in system viewer",
+			desc = "Open Mermaid/D2 PNG in system viewer",
 		},
 	},
 }
